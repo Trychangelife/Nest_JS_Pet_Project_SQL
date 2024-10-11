@@ -1,5 +1,4 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, Req, Res, UseFilters, UseGuards } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { JwtServiceClass } from "../guards/jwt.service";
 import { PostsService } from "../posts/application/posts.service";
