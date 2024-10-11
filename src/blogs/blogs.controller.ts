@@ -28,7 +28,7 @@ export class BlogsController {
       //protected postsService: PostsService,
       protected jwtServiceClass: JwtServiceClass,
       private commandBus: CommandBus,
-      //private queryBus: QueryBus,
+      //private queryBus: QueryBus, 
     ) {
     }
 
