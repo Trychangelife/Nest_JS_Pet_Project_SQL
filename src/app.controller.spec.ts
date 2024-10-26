@@ -1,22 +1,25 @@
 // import { Test, TestingModule } from '@nestjs/testing';
-// import { AppController } from './app.controller';
-// import { AppService } from './app.service';
+// import { INestApplication } from '@nestjs/common';
+// import * as request from 'supertest';
+// import { AppModule } from './../src/app.module';
 
-// describe('AppController', () => {
-//   let appController: AppController;
+// jest.setTimeout(1000 * 100);
+// describe('AppController (e2e)', () => {
+//   let app: INestApplication;
 
 //   beforeEach(async () => {
-//     const app: TestingModule = await Test.createTestingModule({
-//       controllers: [AppController],
-//       providers: [AppService],
+//     const moduleFixture: TestingModule = await Test.createTestingModule({
+//       imports: [AppModule],
 //     }).compile();
 
-//     appController = app.get<AppController>(AppController);
+//     app = moduleFixture.createNestApplication();
+//     await app.init();
 //   });
 
-//   describe('root', () => {
-//     it('should return "Hello World!"', () => {
-//       expect(appController.getHello()).toBe('Hello World!');
-//     });
+//   it('/ (GET)', () => {
+//     return request(app.getHttpServer())
+//       .get('/')
+//       .expect(200)
+//       .expect('Hello World!');
 //   });
 // });

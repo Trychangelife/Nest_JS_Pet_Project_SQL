@@ -1,9 +1,9 @@
 import { Controller, Delete, Get, HttpException, HttpStatus, Param, Req } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { JwtServiceClass } from "../guards/jwt.service";
-import { PayloadType, RefreshTokenStorageType } from "../utils/types";
-import { UsersRepository } from "../users/repositories/users.repository";
+import { JwtServiceClass } from "src/guards/jwt.service";
+import { PayloadType, RefreshTokenStorageType } from "src/utils/types";
+import { UsersRepository } from "src/users/repositories/users.repository";
 import { SecurityDeviceService } from "./application/security.service";
 import { CommandBus } from "@nestjs/cqrs";
 import { GetAllDevicesCommand } from "./application/use-cases/Get_all_devices";

@@ -1,22 +1,28 @@
-import { MailerService } from "@nest-modules/mailer"
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common"
-import nodemailer from "nodemailer"
+import { MailerService } from "@nest-modules/mailer";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 
 @Injectable()
-export class EmailAdapter  {
+export class EmailAdapter {
+  constructor(private mailerService: MailerService) {}
 
-    constructor (private mailerService: MailerService) {}
-    async sendEmailConfirmation (email: string, message: string, subject: string): Promise<object> {
-        return await this.mailerService.sendMail({
+  async sendEmailConfirmation(email: string, message: string, subject: string): Promise<object> {
+    try {
+
+      console.log("Данные:", email, subject, message)
+      const result = await this.mailerService.sendMail({
         from: 'Evgeniy <jenbka999@gmail.com>',
         to: email,
         subject: subject,
-        html: message
-    }).catch((e) => {
+        html: message,
+      });
+
+      
+      return result; // Возвращаем результат
+    } catch (error) {
       throw new HttpException(
-        `Ошибка работы почты: ${JSON.stringify(e)}`,
+        `Ошибка работы почты: ${JSON.stringify(error)}`, // Используем error
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
-    });
     }
-} 
+  }
+}

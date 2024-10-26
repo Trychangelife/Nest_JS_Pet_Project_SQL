@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Put, Req, Res, UseFilters, UseGuards } from "@nestjs/common";
-import { JwtAuthGuard } from "../guards/jwt-auth.guard";
-import { JwtServiceClass } from "../guards/jwt.service";
+import { JwtAuthGuard } from "src/guards/jwt-auth.guard";
+import { JwtServiceClass } from "src/guards/jwt.service";
 import { CommentsService } from "./application/comments.service";
-import { HttpExceptionFilter } from "../exception_filters/exception_filter";
-import { LikesDTO } from "../utils/class-validator.form";
+import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
+import { LikesDTO } from "src/utils/class-validator.form";
 import { Comment } from "src/comments/dto/Comment_validator_type";
 import { HttpExceptionFilterForLikes } from "src/exception_filters/exception_likes";
 import { CommandBus } from "@nestjs/cqrs";

@@ -1,6 +1,6 @@
 import { CommandHandler } from "@nestjs/cqrs"
-import { SuperAdminUsersRepository } from "../../repositories/SuperAdmin.user.repository"
 import { BanStatus } from "src/superAdmin/SAblog/dto/banStatus"
+import { SuperAdminUsersRepositorySql } from "../../repositories/SuperAdmin.user.repositorySQL"
 
 export class GetAllUsersAsSuperAdminCommand {
     constructor(
@@ -17,7 +17,7 @@ export class GetAllUsersAsSuperAdminCommand {
 
 @CommandHandler(GetAllUsersAsSuperAdminCommand)
 export class GetAllUsersAsSuperAdminUseCase {
-    constructor (protected usersRepository: SuperAdminUsersRepository ) {}
+    constructor (protected usersRepository: SuperAdminUsersRepositorySql ) {}
 
     async execute(command: GetAllUsersAsSuperAdminCommand): Promise<object> {
         let skip = 0

@@ -1,11 +1,11 @@
 import { BadRequestException, Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseEnumPipe, Post, Put, Query, Req, Res, UseFilters, UseGuards } from "@nestjs/common";
-import { BasicAuthGuard } from "../guards/basic_auth_guard";
-import { JwtAuthGuard } from "../guards/jwt-auth.guard";
-import { JwtServiceClass } from "../guards/jwt.service";
-import { constructorPagination } from "../utils/pagination.constructor";
-import { LIKES } from "../utils/types";
+import { BasicAuthGuard } from "src/guards/basic_auth_guard";
+import { JwtAuthGuard } from "src/guards/jwt-auth.guard";
+import { JwtServiceClass } from "src/guards/jwt.service";
+import { constructorPagination } from "src/utils/pagination.constructor";
+import { LIKES } from "src/utils/types";
 import { PostsService } from "./application/posts.service";
-import { HttpExceptionFilter } from "../exception_filters/exception_filter";
+import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
 import { Comment } from "src/comments/dto/Comment_validator_type";
 import { PostTypeValidatorForCreate } from "src/posts/dto/PostTypeValidator";
 import { CommandBus } from "@nestjs/cqrs";

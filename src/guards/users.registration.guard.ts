@@ -16,7 +16,7 @@ import { UsersRepository } from "src/users/repositories/users.repository";
       const email = request.body.email;
       const code = request.body.code
       const userWithExistingEmail = await this.usersRepository.findUserByEmail(email);
-      const userWithExistingLogin = await this.usersRepository.findUserByLogin(login);      
+      const userWithExistingLogin = await this.usersRepository.findUserByLogin(login);
       
       if (userWithExistingEmail) {
         const errorResponseForEmail = {

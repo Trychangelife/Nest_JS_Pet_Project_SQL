@@ -7,10 +7,8 @@ export type UsersType = {
     login: string;
     email: string;
     createdAt: string;
-    accountData: {
-        passwordHash: string;
-        passwordSalt: string;
-    };
+    password_hash: string;
+    password_salt: string;
     emailConfirmation: {
         codeForActivated: string;
         activatedStatus: boolean;
@@ -25,3 +23,11 @@ export type UsersType = {
         banReason: string
     }
 };
+
+
+export type userViewModel = {
+    id: string,
+    login: string,
+    email: string,
+    createdAt: string
+}

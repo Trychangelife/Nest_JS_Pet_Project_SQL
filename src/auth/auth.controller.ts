@@ -1,19 +1,20 @@
-import { EmailService } from "../email/email.service";
-import { UsersRepository } from "../users/repositories/users.repository";
-import { UsersService } from "../users/application/users.service";
+import { EmailService } from "src/email/email.service";
+import { UsersRepository } from "src/users/repositories/users.repository";
+import { UsersService } from "src/users/application/users.service";
 import { AuthService } from "./application/auth.service";
 import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, Req, Request, Res, UseFilters, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
-import { RefreshTokenStorageType } from "../utils/types";
+import { RefreshTokenStorageType } from "src/utils/types";
 import { UsersType } from "src/users/dto/UsersType";
-import { JwtServiceClass } from "../guards/jwt.service";
+import { JwtServiceClass } from "src/guards/jwt.service";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { JwtAuthGuard } from "../guards/jwt-auth.guard";
-import { HttpExceptionFilter } from "../exception_filters/exception_filter";
-import { UserRegistrationFlow } from "../guards/users.registration.guard";
+import { JwtAuthGuard } from "src/guards/jwt-auth.guard";
+import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
+import { UserRegistrationFlow } from "src/guards/users.registration.guard";
 import { AuthForm } from "src/auth/dto/AuthForm_validator";
 import { EmailForRecoveryPassword } from "./dto/EmailForRecoveryPassword_Validator";
 import { NewPassword } from "./dto/NewPassword_Validator";
+import { isUuid } from "uuidv4";
 
 
 @Controller('auth')
@@ -29,14 +30,15 @@ export class AuthController {
     }
     @Post('login')
     async authorization(@Request() req, @Body() DataUser: AuthForm, @Res() res) {
-        await this.authService.informationAboutAuth(req.ip, DataUser.loginOrEmail);
+        //await this.authService.informationAboutAuth(req.ip, DataUser.loginOrEmail);
         const ip = req.ip
         const aboutDevice = req.headers['user-agent']
-        const checkIP = await this.authService.counterAttemptAuth(req.ip, DataUser.loginOrEmail);
+        //const checkIP = await this.authService.counterAttemptAuth(req.ip, DataUser.loginOrEmail);
+        const checkIP = true 
         if (checkIP) {
             const user = await this.usersService.checkCredentials(DataUser.loginOrEmail, DataUser.password);
-            const foundUser = await this.usersRepository.findUserByLogin(DataUser.loginOrEmail, "full");
-            if (!user || foundUser?.banInfo.isBanned == true) {
+            const foundUser = await this.usersRepository.findUserByLogin(DataUser.loginOrEmail);
+            if (!user || foundUser?.banInfo?.isBanned == true) {
                 throw new HttpException("UNAUTHORIZED", HttpStatus.UNAUTHORIZED)
             }
             else if (foundUser && user) {
@@ -88,7 +90,7 @@ export class AuthController {
     @Post('registration')
     @UseGuards(UserRegistrationFlow)
     @UseFilters(new HttpExceptionFilter())
-    //@UsePipes(new CustomValidationPipe())
+    //@UsePipes(new ValidationPipe())
     async registration(@Body() user: AuthForm, @Request() req: { ip: string }, @Res() res) {
         const result: UsersType | null | boolean = await this.usersService.createUser(user.password, user.login, user.email, req.ip);
         if (result == false) {
@@ -107,8 +109,13 @@ export class AuthController {
     }
     @Post('registration-confirmation')
     async registrationConfirmation(@Body() body: { code: string }, @Request() req: { ip: string }, @Res() res) {
+        if (!isUuid(body.code)) {
+            const errorResponseForConfirmAccount = { errorsMessages: [{ message: 'account already confirmed', field: "code", }] }
+                throw new HttpException(errorResponseForConfirmAccount, HttpStatus.BAD_REQUEST)
+        }
         await this.authService.informationAboutConfirmed(req.ip, body.code);
-        const checkInputCode = await this.authService.counterAttemptConfirm(req.ip, body.code);
+        //const checkInputCode = await this.authService.counterAttemptConfirm(req.ip, body.code);
+        const checkInputCode = true
         if (checkInputCode) {
             const activationResult = await this.usersService.confirmationEmail(body.code);
             if (activationResult) {
@@ -124,9 +131,10 @@ export class AuthController {
         }
     }
     @Post('registration-email-resending')
-    async registrationEmailResending(@Body() user: { password: string, login: string, email: string }, @Request() req: { ip: string }) {
-        await this.authService.informationAboutEmailSend(req.ip, user.email);
-        const checkAttemptEmail = await this.authService.counterAttemptEmail(req.ip, user.email);
+    async registrationEmailResending(@Body() user: { id: number, password: string, login: string, email: string }, @Request() req: { ip: string }) {
+        //await this.authService.informationAboutEmailSend(req.ip, user.email);
+        //const checkAttemptEmail = await this.authService.counterAttemptEmail(req.ip, user.email);
+        const checkAttemptEmail = true
         if (checkAttemptEmail) {
             await this.authService.refreshActivationCode(user.email);
             const emailResending = await this.emailService.emailConfirmation(user.email);
@@ -159,8 +167,9 @@ export class AuthController {
     @UseFilters(new HttpExceptionFilter())
     @Post('password-recovery')
     async passwordRecovery(@Req() req, @Body() user: EmailForRecoveryPassword) {
-        await this.authService.informationAboutRecoveryPassword(req.ip, user.email);
-        const checkAttemptRecoveryPassword = await this.authService.counterAttemptRecoveryPassword(req.ip, user.email);
+        //await this.authService.informationAboutRecoveryPassword(req.ip, user.email);
+        //const checkAttemptRecoveryPassword = await this.authService.counterAttemptRecoveryPassword(req.ip, user.email);
+        const checkAttemptRecoveryPassword = true
         if (checkAttemptRecoveryPassword) {
             const createRecoveryPassword = await this.usersService.passwordRecovery(user.email)
             // 	Even if current email is not registered (for prevent user's email detection)
@@ -180,10 +189,11 @@ export class AuthController {
     @Post('new-password')
     async newPassword(@Req() req, @Body() newPasswordEntity: NewPassword) {
         // Регистрируем обращение на наш эндпоинт 
-        await this.authService.informationAboutNewPassword(req.ip, newPasswordEntity.recoveryCode);
+        //await this.authService.informationAboutNewPassword(req.ip, newPasswordEntity.recoveryCode);
         // Проверяем наличие 5 и более обращений за последних 10 секунд (для 429 ошибки)
-        const checkAttemptNewPassword = await this.authService.counterAttemptNewPassword(req.ip, newPasswordEntity.recoveryCode);
+        //const checkAttemptNewPassword = await this.authService.counterAttemptNewPassword(req.ip, newPasswordEntity.recoveryCode);
         // True возвращается - значит все хорошо, пользователь нам не спамит
+        const checkAttemptNewPassword = true
         if (checkAttemptNewPassword) {
             // Тут нужно реализовать создание нового пароля для юзера
             const result = await this.usersService.createNewPassword(newPasswordEntity.newPassword, newPasswordEntity.recoveryCode)

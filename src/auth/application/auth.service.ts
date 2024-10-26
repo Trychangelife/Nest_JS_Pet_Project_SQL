@@ -19,7 +19,8 @@ export class AuthService {
     }
     async refreshActivationCode (email: string): Promise <UsersType | null> {
         const refreshCode = uuid()
-        return await this.usersRepository.refreshActivationCode(email, refreshCode)
+        const userId = (await this.usersRepository.findUserByEmail(email))?.id
+        return await this.usersRepository.refreshActivationCode(userId, refreshCode)
     }
     async counterAttemptAuth (ip: string, login: string): Promise <boolean> {
         return await this.usersRepository.counterAttemptAuth(ip, login)

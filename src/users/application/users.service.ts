@@ -1,12 +1,12 @@
 import { Injectable } from "@nestjs/common"
 import * as bcrypt from "bcrypt"
 import { ObjectId } from "mongodb"
-import { EmailService } from "../../email/email.service"
-import { RegistrationDataType } from "../../utils/types"
+import { EmailService } from "src/email/email.service"
+import { RegistrationDataType } from "src/utils/types"
 import { UsersType } from "src/users/dto/UsersType"
-import { UsersRepository } from "../repositories/users.repository"
 import { v4 as uuidv4 } from "uuid"
 import { User } from "../dto/UserClass"
+import { UsersRepository } from "../repositories/users.repository"
 
 @Injectable()
 export class UsersService {
@@ -31,16 +31,17 @@ export class UsersService {
         const passwordSalt = await bcrypt.genSalt(10)
         const passwordHash = await this._generateHash(password, passwordSalt)
         // Построено на классе
-        const newUser = new User(new ObjectId(), uuidv4(),login, email, (new Date()).toISOString(), { passwordHash, passwordSalt}, {codeForActivated: uuidv4(), activatedStatus: false})
-        const registrationData: RegistrationDataType = {
-            ip,
-            dateRegistation: new Date(), 
-            email
-        }
-        await this.usersRepository.informationAboutRegistration(registrationData)
-        const checkScam = await this.usersRepository.ipAddressIsScam(ip)
+        const newUser = new User(new ObjectId(), uuidv4(),login, email, (new Date()).toISOString(), passwordHash, passwordSalt, {codeForActivated: uuidv4(), activatedStatus: false})
+        // const registrationData: RegistrationDataType = {
+        //     ip,
+        //     dateRegistation: new Date(), 
+        //     email
+        // }
+        //await this.usersRepository.informationAboutRegistration(registrationData)
+        //const checkScam = await this.usersRepository.ipAddressIsScam(ip)
+        const checkScam = true
         if (checkScam == true) {
-            if (await this.usersRepository.findUserByLogin(login) !== null || await this.usersRepository.findUserByEmail(email) !== null ) {
+            if (await this.usersRepository.findUserByLogin(login)  || await this.usersRepository.findUserByEmail(email) ) {
                 return false
             }
             else {  
@@ -59,11 +60,12 @@ export class UsersService {
         return hash
     }
     async checkCredentials(login: string, password: string,) {
-        const user = await this.usersRepository.findUserByLogin(login)
-        const user2 = await this.usersRepository.findUserByEmail(login)
-        if (!user && !user2) return false
-        const passwordHash = await this._generateHash(password, user.accountData.passwordSalt)
-        if (user.accountData.passwordHash !== passwordHash) {
+        // const user = await this.usersRepository.findUserByLogin(login)
+        //const user2 = await this.usersRepository.findUserByEmail(login)
+        const userHash = await this.usersRepository.findUserHash(login)
+        if (!userHash) return false
+        const passwordHash = await this._generateHash(password, userHash.password_salt)
+        if (userHash.password_hash !== passwordHash) {
             return false
         }
         return true
@@ -73,8 +75,9 @@ export class UsersService {
     }
     async confirmationEmail(code: string): Promise<boolean> {
         let user = await this.usersRepository.findUserByConfirmationCode(code)
-        if (user) {
-            return await this.usersRepository.confirmationEmail(user)
+        let userCode: string | null = await this.usersRepository.findCode(code)
+        if (user && userCode) {
+            return await this.usersRepository.confirmationEmail(user.id, userCode)
         }
         else {
             return false

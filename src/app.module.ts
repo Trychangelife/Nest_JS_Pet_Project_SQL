@@ -79,6 +79,10 @@ import { UpdateBlogByBloggerUseCase } from './bloggers/application/use-cases/upd
 import { DeletePostByBloggerUseCase } from './bloggers/application/use-cases/delete_post_by_id';
 import { CheckBanStatusSuperAdminUseCase } from './superAdmin/SAusers/application/useCases/check_banStatus';
 import { CheckForbiddenUseCase } from './posts/application/use-cases/check_forbidden';
+import { SuperAdminUsersRepositorySql } from './superAdmin/SAusers/repositories/SuperAdmin.user.repositorySQL';
+import * as fs from 'fs';
+import { CacheModule } from '@nestjs/cache-manager';
+
 
 
 
@@ -110,7 +114,7 @@ const emailProviders = [EmailService, EmailManager, EmailAdapter,]
 const authProviders = [AuthService,]
 const securityDevicesProviders = [SecurityDeviceService, SecurityDeviceRepository,]
 const blogsSuperAdminProviders = [BlogsSuperAdminRepository,]
-const usersSuperAdminProviders = [SuperAdminUsersRepository, ]
+const usersSuperAdminProviders = [SuperAdminUsersRepository, SuperAdminUsersRepositorySql]
 
 
 @Module({
@@ -129,18 +133,36 @@ const usersSuperAdminProviders = [SuperAdminUsersRepository, ]
       },
     }), inject: [ConfigService]
   }), 
+  //Вариант для Aiven
+  // TypeOrmModule.forRoot({
+  //   type: 'postgres',
+  //   host: process.env.POSTGRES_HOST,
+  //   port: 18391, //Заменить на 5432 если это будет neonDB
+  //   username: process.env.POSTGRES_USERNAME,
+  //   password: process.env.POSTGRES_PASSWORD, 
+  //   database: process.env.POSTGRES_DATABASE_NAME,
+  //   //url: process.env.DATABASE_URL,
+  //   //autoLoadEntities: false,
+  //   //synchronize: true,
+  //   logging: true,
+  //   ssl: {
+  //     rejectUnauthorized: true,
+  //     ca: fs.readFileSync("./ca.pem").toString()
+  //   }
+  // }), 
+
+  // Локальная БД - для прохождения тестов т.к пинг либо оптимизация увеличивает время запроса к БД более 6 сек.
   TypeOrmModule.forRoot({
-    type: 'postgres',
-    host: process.env.POSTGRES_HOST,
-    port: 5432,
-    username: process.env.POSTGRES_USERNAME,
-    password: process.env.POSTGRES_PASSWORD, 
-    database: process.env.POSTGRES_DATABASE_NAME,
-    url: process.env.DATABASE_URL,
-    autoLoadEntities: false,
-    synchronize: true,
-    ssl: true,
-  }),
+       type: 'postgres',
+       host: "localhost",
+       port: 5432,
+       username: "postgres",
+       password: process.env.LOCAL_PASSWORD_DB,
+       logging: true,
+       synchronize: true,
+       maxQueryExecutionTime:10,
+       poolSize: 100
+    }),
   ConfigModule.forRoot({
     isGlobal: true,
     envFilePath: '.env'
@@ -163,8 +185,12 @@ const usersSuperAdminProviders = [SuperAdminUsersRepository, ]
     secret: process.env.JWT_SECRET,
     signOptions: {
         expiresIn: '24h'
-    }
-}), CqrsModule],
+    },
+    
+}), CqrsModule, CacheModule.register({
+  ttl: 10000,
+  max: 10
+})],
   controllers: [AppController, BlogsController, PostController, UsersController, AuthController, CommentsController, FullDataController, SecurityDeviceController, BloggersController, SuperAdminBlogsController, SuperAdminUsersController],
   providers: [AppService,
     {provide: BlogsRepository, useClass: process.env.USE_DATABASE === 'SQL' ? BlogsRepositorySql : BlogsRepository},

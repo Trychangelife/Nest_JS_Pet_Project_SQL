@@ -95,11 +95,8 @@ export const usersSchema = new mongoose.Schema<UsersType>({
     login: {type: String, required: true},
     email: {type: String, required: true},
     createdAt: {type: String, required: true},
-    accountData: {
-        passwordHash: {type: String, required: true},
-        passwordSalt: {type: String, required: true},
-        
-    },
+    password_hash: {type: String, required: true},
+    password_salt: {type: String, required: true},
     emailConfirmation: {
         codeForActivated: {type: String, required: true},
         activatedStatus: {type: String, required: true}

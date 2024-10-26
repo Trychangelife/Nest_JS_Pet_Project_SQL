@@ -13,5 +13,9 @@ export class AppController {
     const imagePath = path.resolve(__dirname,`..`,`src` , 'image', 'first_page.jpg');
     
     res.sendFile(imagePath);
-  } 
+  }
+  @Get()
+  getHello(): string {
+    return 'Hello World!';
+  }
 }

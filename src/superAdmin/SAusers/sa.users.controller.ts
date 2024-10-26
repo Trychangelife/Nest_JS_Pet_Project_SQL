@@ -12,33 +12,58 @@ import { DeleteUserAsSuperAdminCommand } from "./application/useCases/delete_use
 import { BanUserAsSuperAdminCommand } from "./application/useCases/ban_user_SA";
 import { BanUserInputModel } from "./dto/banUserInputModel";
 import { BanStatus } from "../SAblog/dto/banStatus";
+import { DataSource } from "typeorm";
+import { InjectDataSource } from "@nestjs/typeorm";
+import { RateLimitGuard } from "src/guards/rate-limit.guard";
 
 @Controller('sa/users')
 export class SuperAdminUsersController {
 
-    constructor(private commandBus: CommandBus) {
+    constructor(private commandBus: CommandBus,
+      @InjectDataSource() protected dataSource: DataSource) {
     }
-    
+    @UseFilters(new HttpExceptionFilter())
+    @Post('/test')
+    async test(@Body() login: string, email: string) {
+
+      const result2 = await this.dataSource.query(`
+        SELECT *
+        FROM users
+        WHERE email = $1
+      `, [email])
+
+      const result = await this.dataSource.query(`
+      SELECT *
+      FROM users
+      WHERE login = $1
+      `, [login])
+      return {result, result2}
+    }
     @Post()
     @UseGuards(BasicAuthGuard)
     @UseGuards(UserRegistrationFlow)
     @UseFilters(new HttpExceptionFilter())
     async createUser(@Body() user: AuthForm,  @Request() req: {ip: string},  @Res() res) {
-        const result: UsersType | boolean = await this.commandBus.execute(new CreateUserSACommand(user.password, user.login, user.email, req.ip));
-        if (result == false) {
-            throw new HttpException("", HttpStatus.BAD_REQUEST)
-        }
-        else if (result == null) {
+        const result = await this.commandBus.execute(new CreateUserSACommand(user.password, user.login, user.email, req.ip));
+       if (result == null) {
             throw new HttpException("To many requests", HttpStatus.TOO_MANY_REQUESTS)
         }
         else {
+          //View модель только для тестов, потому что в БД лежит Integer, а тесты требуют строку.
+          const viewModel = {
+            id: result.id.toString(),
+            email: result.email,
+            login: result.login,
+            createdAt: result.createdAt
+          }
             res
                 .status(201)
-                .send(result)
+                .send(viewModel)
         }
     }
 
     @UseGuards(BasicAuthGuard)
+    //@UseGuards(RateLimitGuard)
     @Get()
     async getAllUsers(@Query() query: {searchEmailTerm: string, searchLoginTerm: string, pageNumber: string, pageSize: string, sortBy: string, sortDirection: string, banStatus: BanStatus}) {
         const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string, query.searchEmailTerm as string, query.searchLoginTerm as string);

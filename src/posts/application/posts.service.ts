@@ -2,7 +2,6 @@ import 'dotenv/config'
 import { Injectable } from "@nestjs/common"
 import { InjectModel } from "@nestjs/mongoose"
 import { Model } from "mongoose"
-import { PostRepository } from "../repositories/posts.repository"
 import { v4 as uuidv4 } from "uuid"
 import { DataSource } from 'typeorm'
 import { InjectDataSource } from '@nestjs/typeorm'

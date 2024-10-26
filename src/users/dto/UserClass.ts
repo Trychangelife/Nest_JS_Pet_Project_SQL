@@ -8,7 +8,8 @@ export class User {
         public login: string,
         public email: string,
         public createdAt: string,
-        public accountData: { passwordHash: string; passwordSalt: string; },
+        public password_hash: string,
+        public password_salt: string,
         public emailConfirmation: { codeForActivated: string; activatedStatus: boolean; },
         public recoveryPasswordInformation?: { codeForRecovery: string; createdDateRecoveryCode: string; },
         public banInfo?: {

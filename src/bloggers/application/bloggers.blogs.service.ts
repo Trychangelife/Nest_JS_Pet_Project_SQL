@@ -1,4 +1,4 @@
-// import { BlogsRepository } from "../repositories/blogs.repository"
+// import { BlogsRepository } from "src/repositories/blogs.repository"
 // import { v4 as uuidv4 } from "uuid"
 // import { Injectable, Scope } from "@nestjs/common"
 // import { BlogsClass } from "src/blogs/dto/BlogsClass"

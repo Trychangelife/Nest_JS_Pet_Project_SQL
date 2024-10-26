@@ -11,13 +11,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     const res: any = exception.getResponse()
   
-    if (status === 400 && res.errorsMessages) {
-      const errorResponse = {
-        errorsMessages: res.errorsMessages,
-      }
-      response.status(status).json(errorResponse) 
-    }
-    else if (status === 400 && res.message) {
+    // if (status === 400 && res.message) {
+    //   const errorResponse = {
+    //     errorsMessages: [
+    //       {
+    //         message: res?.message,
+    //         field: res?.field
+    //       }
+    //     ],
+    //   }
+    //   response.status(status).json(errorResponse) 
+    // }
+    //Возможно блок ниже дальше нужно будет снести
+    if (status === 400 && res.message) {
       const errorResponse = {
         errorsMessages: [],
       }
@@ -33,7 +39,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     //   response.status(status).json({ errorsMessages: [{ message: "passes body incorrect", field: "likeStatus" }] })
     // }
     else {
-      response.status(status).send()
+      response.status(status).send(res)
     }
   }
 }
