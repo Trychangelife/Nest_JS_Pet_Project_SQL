@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import { MongooseModule } from '@nestjs/mongoose';
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ServerApiVersion } from 'mongodb';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -158,10 +158,10 @@ const usersSuperAdminProviders = [SuperAdminUsersRepository, SuperAdminUsersRepo
        port: 5432,
        username: "postgres",
        password: process.env.LOCAL_PASSWORD_DB,
-       logging: true,
        synchronize: true,
        maxQueryExecutionTime:10,
-       poolSize: 100
+       poolSize: 100,
+       logging: []
     }),
   ConfigModule.forRoot({
     isGlobal: true,
@@ -218,8 +218,9 @@ const usersSuperAdminProviders = [SuperAdminUsersRepository, SuperAdminUsersRepo
     ...useCasesByBloggers,
     ...useCasesUsers,
     ...useCasesSuperAdminUsers,
-    ...UtilityUseCase
+    ...UtilityUseCase,
 ]
+
 })
 export class AppModule {}
 

@@ -96,8 +96,8 @@ export class UsersRepository {
                 totalCount: totalCount,
                 items: users.map(user => ({
                     id: user.id,
-                    login: user.login,
                     email: user.email,
+                    login: user.login,
                     createdAt: user.created_at
                 }))
             };

@@ -22,7 +22,7 @@ export class EmailService {
         const isAccountInactive = await this.isAccountInactive(foundUser.id.toString());
 
         if (isAccountInactive) {
-            return await this.emailManager.sendEmailConfirmation(foundUser, codeForActivated);
+            return  this.emailManager.sendEmailConfirmation(foundUser, codeForActivated);
         }
 
         return false;
@@ -36,7 +36,7 @@ export class EmailService {
         const isAccountInactive = await this.isAccountInactive(foundUser.id.toString());
 
         if (isAccountInactive) {
-            return await this.emailManager.sendEmailRecoveryPassword(foundUser, codeForRecovery);
+            return this.emailManager.sendEmailRecoveryPassword(foundUser, codeForRecovery);
         }
 
         return false;

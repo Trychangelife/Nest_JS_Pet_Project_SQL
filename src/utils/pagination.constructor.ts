@@ -4,6 +4,7 @@ export function constructorPagination(pageSize: string | undefined, pageNumber: 
   if (pageSize) result.pageSize = +pageSize
   if (pageNumber) result.pageNumber = +pageNumber
   if (sortBy) result.sortBy = sortBy
+  if (sortBy == "createdAt") sortBy="created" + "_" +"at"
   if (sortDirection) result.sortDirection = sortDirection
   if (searchLoginTerm) result.searchLoginTerm = searchLoginTerm
   if (searchEmailTerm) result.searchEmailTerm = searchEmailTerm

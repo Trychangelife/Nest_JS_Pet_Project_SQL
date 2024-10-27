@@ -22,23 +22,6 @@ export class SuperAdminUsersController {
     constructor(private commandBus: CommandBus,
       @InjectDataSource() protected dataSource: DataSource) {
     }
-    @UseFilters(new HttpExceptionFilter())
-    @Post('/test')
-    async test(@Body() login: string, email: string) {
-
-      const result2 = await this.dataSource.query(`
-        SELECT *
-        FROM users
-        WHERE email = $1
-      `, [email])
-
-      const result = await this.dataSource.query(`
-      SELECT *
-      FROM users
-      WHERE login = $1
-      `, [login])
-      return {result, result2}
-    }
     @Post()
     @UseGuards(BasicAuthGuard)
     @UseGuards(UserRegistrationFlow)

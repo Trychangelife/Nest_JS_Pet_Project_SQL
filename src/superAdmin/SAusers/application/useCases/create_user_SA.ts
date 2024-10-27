@@ -57,7 +57,7 @@ export class CreateUserSAUseCase {
               }
             else {
                 const createdUser: userViewModel | null = await this.usersRepository.createUser(newUser)
-                await this.emailService.emailConfirmation(newUser.email)
+                this.emailService.emailConfirmation(newUser.email)
                 return createdUser
             }
        //}
