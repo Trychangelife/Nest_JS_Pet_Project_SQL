@@ -8,7 +8,6 @@ export class EmailAdapter {
   async sendEmailConfirmation(email: string, message: string, subject: string): Promise<object> {
     try {
 
-      console.log("Данные:", email, subject, message)
       const result = await this.mailerService.sendMail({
         from: 'Evgeniy <jenbka999@gmail.com>',
         to: email,

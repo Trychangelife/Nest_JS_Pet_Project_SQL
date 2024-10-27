@@ -20,14 +20,11 @@ export class JwtServiceClass {
     async accessToken(user: UsersType) {
         return this.jwtService.sign(
             { id: user.id }, 
-            { secret: process.env.JWT_SECRET, expiresIn: '10m' }
+            { secret: process.env.JWT_SECRET, expiresIn: '10s' }
         );
     }
-
+    //
     async refreshToken(user: UsersType, ip: string, titleDevice: string, rToken?: string): Promise<string> {
-        // Создаем QueryRunner для выполнения транзакций
-        const queryRunner = this.dataSource.createQueryRunner();
-        await queryRunner.connect();
 
         // Проверяем наличие устройства для пользователя
         const [checkUserAgent] = await this.dataSource.query(`
@@ -46,7 +43,7 @@ export class JwtServiceClass {
             const deviceId = checkUserAgent.device_id;
             const refreshToken = this.jwtService.sign(
                 { id: user.id, deviceId: deviceId },
-                { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20m' }
+                { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20s' }
             );
 
             await this.dataSource.query(`
@@ -66,7 +63,7 @@ export class JwtServiceClass {
         const deviceId = uuid();
         const refreshToken = this.jwtService.sign(
             { id: user.id, deviceId: deviceId },
-            { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20m' }
+            { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20s' }
         );
 
         const newRefreshTokenForStorage: RefreshTokenStorageType = {
@@ -123,6 +120,38 @@ export class JwtServiceClass {
         }
         return null;
     }
+
+    async findTokenInData(rToken: string): Promise<any> {
+        try {
+            const result = await this.dataSource.query(`
+                SELECT refresh_token FROM refresh_token_storage
+                WHERE refresh_token = $1
+            `, [rToken]);
+    
+            // Проверяем, если результат пустой, возвращаем null
+            if (result.length === 0) {
+                return null;
+            }
+    
+            // Если есть данные, возвращаем первую строку
+            return result[0];
+        } catch (error) {
+            return null;
+        }
+    }
+
+    async deleteTokenFromData(rToken: string): Promise<void> {
+        try {
+            await this.dataSource.query(`
+                DELETE FROM refresh_token_storage
+                WHERE refresh_token = $1
+            `, [rToken]);
+        } catch (error) {
+            // Можно добавить обработку ошибок, если это нужно
+            console.error("Error deleting token:", error);
+        }
+    }
+    
 
     async checkRefreshToken(refreshToken: string): Promise<boolean | object> {
         try {

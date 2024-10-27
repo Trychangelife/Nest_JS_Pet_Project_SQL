@@ -448,13 +448,19 @@ async findUserHash(login: string): Promise<UsersType | null> {
 }
 
 
-async findUserByLoginForMe(login: string): Promise<UsersType | null> {
+async findUserByLoginForAboutMe(login: string): Promise<object | null> {
     try {
         const result = await this.dataSource.query(
             `SELECT * FROM users WHERE login = $1`,
             [login]
         );
-        return result[0] || null;
+
+        const resultView = {
+            login: result[0].login,
+            email: result[0].email,
+            userId: result[0].id.toString()
+        }
+        return resultView || null;
     } catch (error) {
         console.error(error);
         return null;

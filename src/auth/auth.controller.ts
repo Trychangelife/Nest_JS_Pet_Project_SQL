@@ -15,6 +15,7 @@ import { AuthForm } from "src/auth/dto/AuthForm_validator";
 import { EmailForRecoveryPassword } from "./dto/EmailForRecoveryPassword_Validator";
 import { NewPassword } from "./dto/NewPassword_Validator";
 import { isUuid } from "uuidv4";
+import { RateLimitGuard } from "src/guards/rate-limit.guard";
 
 
 @Controller('auth')
@@ -28,7 +29,10 @@ export class AuthController {
         protected jwtService: JwtServiceClass,
         @InjectModel('RefreshToken') protected refreshTokenModel: Model<RefreshTokenStorageType>) {
     }
+
+    
     @Post('login')
+    @UseGuards(RateLimitGuard)
     async authorization(@Request() req, @Body() DataUser: AuthForm, @Res() res) {
         //await this.authService.informationAboutAuth(req.ip, DataUser.loginOrEmail);
         const ip = req.ip
@@ -87,7 +91,10 @@ export class AuthController {
             throw new HttpException("Something wrong", HttpStatus.BAD_REQUEST)
         }
     }
+
+    
     @Post('registration')
+    @UseGuards(RateLimitGuard)
     @UseGuards(UserRegistrationFlow)
     @UseFilters(new HttpExceptionFilter())
     //@UsePipes(new ValidationPipe())
@@ -108,6 +115,7 @@ export class AuthController {
         }
     }
     @Post('registration-confirmation')
+    @UseGuards(RateLimitGuard)
     async registrationConfirmation(@Body() body: { code: string }, @Request() req: { ip: string }, @Res() res) {
         if (!isUuid(body.code)) {
             const errorResponseForConfirmAccount = { errorsMessages: [{ message: 'account already confirmed', field: "code", }] }
@@ -131,13 +139,17 @@ export class AuthController {
         }
     }
     @Post('registration-email-resending')
+    @UseGuards(RateLimitGuard)
     async registrationEmailResending(@Body() user: { id: number, password: string, login: string, email: string }, @Request() req: { ip: string }) {
         //await this.authService.informationAboutEmailSend(req.ip, user.email);
         //const checkAttemptEmail = await this.authService.counterAttemptEmail(req.ip, user.email);
         const checkAttemptEmail = true
         if (checkAttemptEmail) {
             await this.authService.refreshActivationCode(user.email);
-            const emailResending = await this.emailService.emailConfirmation(user.email);
+            //const emailResending = await this.emailService.emailConfirmation(user.email);
+            const emailResending = true
+
+            //ЗАКОММЕНТИРОВАЛ ЧТОБЫ НЕ ОТПРАВЛЯТЬ ПИСЬМА ПРОСТО ТАК
             if (emailResending) {
                 throw new HttpException("Email send succefully", HttpStatus.NO_CONTENT);
             }
@@ -152,17 +164,17 @@ export class AuthController {
     }
     @Post('logout')
     async logout(@Req() req) {
-        const refreshTokenInCookie = req.cookies.refreshToken
-        const checkRefreshToken = await this.jwtService.checkRefreshToken(refreshTokenInCookie)
-        const findTokenInData = await this.refreshTokenModel.findOne({ refreshToken: refreshTokenInCookie }).lean()
+        const refreshTokenInCookie = req.cookies.refreshToken;
+        const checkRefreshToken = await this.jwtService.checkRefreshToken(refreshTokenInCookie);
+        const findTokenInData = await this.jwtService.findTokenInData(refreshTokenInCookie);
         if (refreshTokenInCookie && checkRefreshToken !== false && findTokenInData !== null) {
-            await this.refreshTokenModel.findOneAndDelete({ refreshToken: refreshTokenInCookie })
-            throw new HttpException("Logout succefully, bye!", HttpStatus.NO_CONTENT)
-        }
-        else {
-            throw new HttpException("Sorry, you already logout, repeat authorization", HttpStatus.UNAUTHORIZED)
+            await this.jwtService.deleteTokenFromData(refreshTokenInCookie);
+            throw new HttpException("Logout successfully, bye!", HttpStatus.NO_CONTENT);
+        } else {
+            throw new HttpException("Sorry, you already logged out, please re-authenticate", HttpStatus.UNAUTHORIZED);
         }
     }
+    
     // If the inputModel has invalid email (for example 222^gmail.com)
     @UseFilters(new HttpExceptionFilter())
     @Post('password-recovery')
@@ -212,7 +224,7 @@ export class AuthController {
     @UseGuards(JwtAuthGuard)
     @Get('me')
     async aboutMe(@Request() req) {
-        const foundUser = await this.usersRepository.findUserByLoginForMe(req.user.login);
+        const foundUser = await this.usersRepository.findUserByLoginForAboutMe(req.user.login);
         return foundUser
     }
     @Get('get-registration-date')
