@@ -26,8 +26,7 @@ export class AuthController {
         protected usersService: UsersService,
         protected authService: AuthService,
         protected emailService: EmailService,
-        protected jwtService: JwtServiceClass,
-        @InjectModel('RefreshToken') protected refreshTokenModel: Model<RefreshTokenStorageType>) {
+        protected jwtService: JwtServiceClass,) {
     }
 
     

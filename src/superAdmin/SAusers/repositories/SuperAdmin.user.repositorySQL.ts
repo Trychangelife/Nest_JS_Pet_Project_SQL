@@ -147,7 +147,6 @@ export class SuperAdminUsersRepositorySql {
          VALUES ($1, $2, $3)`,
                 [userId, newUser.password_hash, newUser.password_salt],
             );
-            console.log("Шаг 3", new Date())
             // Шаг 3: Вставка данных в таблицу email_confirmation
             await queryRunner.query(
                 `INSERT INTO email_confirmation (user_id, code_for_activated, activated_status)
@@ -175,7 +174,6 @@ export class SuperAdminUsersRepositorySql {
                     newUser.banInfo?.banReason || null,
                 ],
             );
-            console.log("Шаг 6", new Date())
             // Возвращение созданного пользователя
             const createdUser = await queryRunner.query(
                 `SELECT id, login, email, created_at as "createdAt" FROM users WHERE id = $1`, [userId]

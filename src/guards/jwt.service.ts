@@ -107,12 +107,13 @@ export class JwtServiceClass {
             SELECT * FROM refresh_token_storage
             WHERE refresh_token = $1
         `, [rToken]);
-
-        if (checkToken) {
+        //Если приходит undefined - значит токена в базе уже нет, возможно сделали logout, тогда пусть идут входят в систему.
+        if (checkToken !== undefined) {
             try {
                 const result = this.jwtService.verify(checkToken.refresh_token, { secret: process.env.JWT_REFRESH_SECRET });
                 const newAccessToken = await this.accessToken(result);
                 const newRefreshToken = await this.refreshToken(result, ip, titleDevice, rToken);
+
                 return { newAccessToken, newRefreshToken };
             } catch (error) {
                 return null;
