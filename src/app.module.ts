@@ -132,39 +132,39 @@ const usersSuperAdminProviders = [SuperAdminUsersRepositorySql]
     }), inject: [ConfigService]
   }), 
   //Вариант для Aiven
-  // TypeOrmModule.forRoot({
-  //   type: 'postgres',
-  //   host: process.env.POSTGRES_HOST,
-  //   port: 18391, //Заменить на 5432 если это будет neonDB
-  //   username: process.env.POSTGRES_USERNAME,
-  //   password: process.env.POSTGRES_PASSWORD, 
-  //   database: process.env.POSTGRES_DATABASE_NAME,
-  //   //url: process.env.DATABASE_URL,
-  //   //autoLoadEntities: false,
-  //   //synchronize: true,
-  //   logging: true,
-  //   ssl: {
-  //     rejectUnauthorized: true,
-  //     ca: fs.readFileSync("./ca.pem").toString()
-  //   }
-  // }), 
+  TypeOrmModule.forRoot({
+    type: 'postgres',
+    host: process.env.POSTGRES_HOST,
+    port: 18391, //Заменить на 5432 если это будет neonDB
+    username: process.env.POSTGRES_USERNAME,
+    password: process.env.POSTGRES_PASSWORD, 
+    database: process.env.POSTGRES_DATABASE_NAME,
+    //url: process.env.DATABASE_URL,
+    //autoLoadEntities: false,
+    //synchronize: true,
+    logging: true,
+    ssl: {
+      rejectUnauthorized: true,
+      ca: fs.readFileSync("./ca.pem").toString()
+    }
+  }), 
 
   // Локальная БД - для прохождения тестов т.к пинг либо оптимизация увеличивает время запроса к БД более 6 сек.
-  TypeOrmModule.forRoot({
-       type: 'postgres',
-       host: "localhost",
-       port: 5432,
-       username: "postgres",
-       password: process.env.LOCAL_PASSWORD_DB,
-       synchronize: true,
-       maxQueryExecutionTime:10,
-       poolSize: 100,
-       logging: []
-    }),
-  ConfigModule.forRoot({
-    isGlobal: true,
-    envFilePath: '.env'
-  }),
+  // TypeOrmModule.forRoot({
+  //      type: 'postgres',
+  //      host: "localhost",
+  //      port: 5432,
+  //      username: "postgres",
+  //      password: process.env.LOCAL_PASSWORD_DB,
+  //      synchronize: true,
+  //      maxQueryExecutionTime:10,
+  //      poolSize: 100,
+  //      logging: []
+  //   }),
+  // ConfigModule.forRoot({
+  //   isGlobal: true,
+  //   envFilePath: '.env'
+  // }),
 
   //MongooseModule.forRoot(uri, options),
   //MongooseModule.forFeature([
