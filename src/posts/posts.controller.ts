@@ -58,7 +58,6 @@ export class PostController {
             //const token = req.headers.authorization.split(' ')[1]
             //const userId = await this.jwtServiceClass.getUserByAccessToken(token)
             const takePost: PostsType | null = await this.commandBus.execute(new GetSinglePostCommand(params.id)) // Тут еще был userId из токена
-            console.log(takePost)
             //const checkBan = await this.commandBus.execute(new CheckBanStatusSuperAdminCommand(null, takePost?.blogId))
             if (takePost !== null) { 
             //if (takePost !== undefined && checkBan !== true && checkBan !== null) { - раскомментирую когда дойду до банов

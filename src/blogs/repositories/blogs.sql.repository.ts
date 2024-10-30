@@ -14,7 +14,7 @@ export class BlogsRepositorySql {
     }
 
     async getAllBlogs(
-        skip: number,
+        offset: number,
         limit: number = 10,
         searchNameTerm?: string | null,
         pageNumber: number = 1,
@@ -22,26 +22,34 @@ export class BlogsRepositorySql {
         sortDirection: string = 'desc'
     ): Promise<object> {
 
-        // Базовый SQL-запрос и дополнительные параметры
-        const searchCondition = searchNameTerm ? `WHERE name ILIKE $1` : '';
-        const queryParams = searchNameTerm ? [`%${searchNameTerm}%`, limit, skip] : [limit, skip];
+// Базовый SQL-запрос и дополнительные параметры
+const searchCondition = searchNameTerm ? `WHERE name ILIKE $1` : '';
+const queryParams = searchNameTerm ? [`%${searchNameTerm}%`, limit, offset] : [limit, offset];
 
-        // Запрос для общего количества блогов
-        const [totalCountResult] = await this.dataSource.query(`SELECT COUNT(*)::int AS count FROM "blog"`);
-        const totalCount = parseInt(totalCountResult.count, 10);
-        const pagesCount = Math.ceil(totalCount / limit);
+// Запрос для общего количества блогов с учетом условия поиска
+const [totalCountResult] = await this.dataSource.query(
+    `
+    SELECT COUNT(*)::int AS count 
+    FROM "blog" 
+    ${searchCondition}
+    `,
+    searchNameTerm ? [`%${searchNameTerm}%`] : []
+);
+const totalCount = parseInt(totalCountResult.count, 10);
+const pagesCount = Math.ceil(totalCount / limit);
 
-        // Основной SQL-запрос для получения блогов с учетом параметров
-        const getAllBlog = await this.dataSource.query(
-            `
-            SELECT * 
-            FROM "blog"
-            ${searchCondition}
-            ORDER BY ${sortBy} ${sortDirection}
-            LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}
-            `,
-            queryParams
-        );
+// Основной SQL-запрос для получения блогов с учетом параметров
+const getAllBlog = await this.dataSource.query(
+    `
+    SELECT * 
+    FROM "blog"
+    ${searchCondition}
+    ORDER BY ${sortBy} ${sortDirection}
+    LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}
+    `,
+    queryParams
+);
+
 
         // Возвращаем форматированный объект
         return {
