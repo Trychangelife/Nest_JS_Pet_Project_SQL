@@ -55,10 +55,10 @@ export class PostController {
     
     @Get(':id')
     async getPostByID(@Param() params, @Req() req) {
-        try {
             //const token = req.headers.authorization.split(' ')[1]
             //const userId = await this.jwtServiceClass.getUserByAccessToken(token)
             const takePost: PostsType | null = await this.commandBus.execute(new GetSinglePostCommand(params.id)) // Тут еще был userId из токена
+            console.log(takePost)
             //const checkBan = await this.commandBus.execute(new CheckBanStatusSuperAdminCommand(null, takePost?.blogId))
             if (takePost !== null) { 
             //if (takePost !== undefined && checkBan !== true && checkBan !== null) { - раскомментирую когда дойду до банов
@@ -67,19 +67,6 @@ export class PostController {
             else {
                 throw new HttpException('Post NOT FOUND', HttpStatus.NOT_FOUND)
             }
-        } catch (error) {
-            const takePost: PostsType | undefined = await this.commandBus.execute(new GetSinglePostCommand(params.id))
-            //const checkBan = await this.commandBus.execute(new CheckBanStatusSuperAdminCommand(null, takePost?.blogId))
-            if (takePost !== undefined) {
-            //if (takePost !== undefined && checkBan !== true && checkBan !== null) {
-                
-                return takePost
-            }
-            else {
-                throw new HttpException('Post NOT FOUND', HttpStatus.NOT_FOUND)
-            }
-        }
-
     }
     @UseGuards(BasicAuthGuard)
     @UseFilters(new HttpExceptionFilter())
