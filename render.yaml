@@ -5,10 +5,9 @@ services:
     name: nestjs-app
     env: node
     region: frankfurt  # Выберите ближайший к вам регион, например, frankfurt для Европы
-    plan: standard
-    buildCommand: yarn && yarn build
+    plan: free
+    buildCommand: yarn install
     startCommand: yarn start:prod
     autoDeploy: true
 
-    # Порты и маршрутизация
-    port: 5000  # Порт, на котором работает ваше приложение (по умолчанию NestJS использует порт 3000)
+
