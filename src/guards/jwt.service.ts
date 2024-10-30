@@ -13,7 +13,6 @@ export class JwtServiceClass {
 
     constructor(
         @InjectDataSource() protected dataSource: DataSource,
-        @InjectModel('RefreshToken') protected refreshTokenModel: Model<RefreshTokenStorageType>,
         protected jwtService: JwtService
     ) {}
 
@@ -23,24 +22,46 @@ export class JwtServiceClass {
             { secret: process.env.JWT_SECRET, expiresIn: '10s' }
         );
     }
+    
+    // Только для выпуска первого токена
+    async getFirstRefreshToken(user: UsersType, ip: string, titleDevice: string): Promise<string> {
+        
+      // Регистрируем новое устройство и токен
+      const deviceId = uuid();
+      const refreshToken = this.jwtService.sign(
+          { id: user.id, deviceId: deviceId },
+          { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20s' }
+      );
+
+      const newRefreshTokenForStorage: RefreshTokenStorageType = {
+          userId: user.id,
+          refreshToken: refreshToken,
+          ip: ip,
+          title: titleDevice,
+          lastActiveDate: new Date(),
+          deviceId: deviceId
+      };
+
+      await this.dataSource.query(`
+          INSERT INTO refresh_token_storage 
+          (user_id, refresh_token, ip, title, device_id, last_activate_date)
+          VALUES ($1, $2, $3, $4, $5, $6)
+      `, [newRefreshTokenForStorage.userId, newRefreshTokenForStorage.refreshToken, newRefreshTokenForStorage.ip, newRefreshTokenForStorage.title, newRefreshTokenForStorage.deviceId, newRefreshTokenForStorage.lastActiveDate]);
+
+      return refreshToken;
+    }
     //
-    async refreshToken(user: UsersType, ip: string, titleDevice: string, rToken?: string): Promise<string> {
+    async refreshToken(user: UsersType, ip: string, titleDevice: string, device_id: string ,rToken: string): Promise<string> {
 
         // Проверяем наличие устройства для пользователя
-        const [checkUserAgent] = await this.dataSource.query(`
+        const [checkDeviceId] = await this.dataSource.query(`
             SELECT * FROM refresh_token_storage
-            WHERE user_id = $1 AND title = $2
-        `, [user.id, titleDevice]);
-
-        // Проверка наличия самого RefreshToken
-        const [checkToken] = rToken ? await this.dataSource.query(`
-            SELECT * FROM refresh_token_storage
-            WHERE refresh_token = $1
-        `, [rToken]) : [null];
+            WHERE user_id = $1 AND device_id = $2
+        `, [user.id, device_id]);
 
         // Если устройство уже зарегистрировано, обновляем токен
-        if (checkUserAgent) {
-            const deviceId = checkUserAgent.device_id;
+        if (checkDeviceId) {
+            const deviceId = checkDeviceId.device_id;
             const refreshToken = this.jwtService.sign(
                 { id: user.id, deviceId: deviceId },
                 { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20s' }
@@ -53,35 +74,6 @@ export class JwtServiceClass {
             `, [new Date(), refreshToken, user.id, deviceId]);
             return refreshToken;
         }
-
-        // Если пришел refresh token и он не зарегистрирован, выбрасываем ошибку
-        if (rToken && !checkToken) {
-            throw new Error("Invalid refresh token");
-        }
-
-        // Регистрируем новое устройство и токен
-        const deviceId = uuid();
-        const refreshToken = this.jwtService.sign(
-            { id: user.id, deviceId: deviceId },
-            { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20s' }
-        );
-
-        const newRefreshTokenForStorage: RefreshTokenStorageType = {
-            userId: user.id,
-            refreshToken: refreshToken,
-            ip: ip,
-            title: titleDevice,
-            lastActiveDate: new Date(),
-            deviceId: deviceId
-        };
-
-        await this.dataSource.query(`
-            INSERT INTO refresh_token_storage 
-            (user_id, refresh_token, ip, title, device_id, last_activate_date)
-            VALUES ($1, $2, $3, $4, $5, $6)
-        `, [newRefreshTokenForStorage.userId, newRefreshTokenForStorage.refreshToken, newRefreshTokenForStorage.ip, newRefreshTokenForStorage.title, newRefreshTokenForStorage.deviceId, newRefreshTokenForStorage.lastActiveDate]);
-
-        return refreshToken;
     }
 
     async getUserByAccessToken(token: string) {
@@ -112,7 +104,7 @@ export class JwtServiceClass {
             try {
                 const result = this.jwtService.verify(checkToken.refresh_token, { secret: process.env.JWT_REFRESH_SECRET });
                 const newAccessToken = await this.accessToken(result);
-                const newRefreshToken = await this.refreshToken(result, ip, titleDevice, rToken);
+                const newRefreshToken = await this.refreshToken(result, ip, titleDevice, checkToken.device_id ,rToken);
 
                 return { newAccessToken, newRefreshToken };
             } catch (error) {

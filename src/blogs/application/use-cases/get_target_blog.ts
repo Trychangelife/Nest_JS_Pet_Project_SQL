@@ -1,5 +1,5 @@
 import { CommandHandler } from "@nestjs/cqrs"
-import { BlogsRepository } from "src/blogs/repositories/blogs.repository"
+import { BlogsRepositorySql } from "src/blogs/repositories/blogs.sql.repository"
 
 
 export class GetTargetBlogCommand {
@@ -12,12 +12,12 @@ export class GetTargetBlogCommand {
 
 @CommandHandler(GetTargetBlogCommand)
 export class GetTargetBlogUseCase {
-    constructor (protected bloggerRepository: BlogsRepository ) {}
+    constructor (protected bloggerRepository: BlogsRepositorySql ) {}
 
 
     async execute(command: GetTargetBlogCommand): Promise<object | undefined> {
 
-        return this.bloggerRepository.targetBloggers(command.blogId, command.userId)
+        return this.bloggerRepository.targetBlog(command.blogId, command.userId)
     }
 }
 

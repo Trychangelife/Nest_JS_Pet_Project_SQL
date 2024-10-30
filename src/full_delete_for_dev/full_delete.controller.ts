@@ -14,17 +14,6 @@ import { DataSource } from "typeorm";
 export class FullDataController {
 
     constructor (
-        @InjectModel('Posts') protected postsModel: Model<PostsType>, 
-        @InjectModel('Blogs') protected bloggerModel: Model<BlogsType>, 
-        @InjectModel('Comments') protected commentsModel: Model<CommentsType>,
-        @InjectModel('Users') protected usersModel: Model<UsersType>,
-        @InjectModel('RegistrationData') protected registrationDataModel: Model<RegistrationDataType>,
-        @InjectModel('AuthData') protected authDataModel: Model<AuthDataType>,
-        @InjectModel('CodeConfirm') protected codeConfirmModel: Model<ConfirmedAttemptDataType>,
-        @InjectModel('EmailSend') protected emailSendModel: Model<EmailSendDataType>,
-        @InjectModel('RefreshToken') protected refreshTokenModel: Model<RefreshTokenStorageType>,
-        @InjectModel('NewPassword') protected newPasswordModel: Model<NewPasswordType>,
-        @InjectModel('RecoveryPassword') protected recoveryPasswordModel: Model<RecoveryPasswordType>,
         @InjectDataSource() protected dataSource: DataSource,
     ) {
 
@@ -43,11 +32,7 @@ export class FullDataController {
         await this.dataSource.createQueryBuilder().delete().from('confirmed_attempt_data').execute();
         await this.dataSource.createQueryBuilder().delete().from('email_send_data').execute();
         await this.dataSource.createQueryBuilder().delete().from('registration_data').execute();
-        // await this.postsModel.deleteMany()
-        // await this.bloggerModel.deleteMany()
-        // await this.usersModel.deleteMany()
-        // await this.commentsModel.deleteMany()
-        // await this.refreshTokenModel.deleteMany()
+        await this.dataSource.createQueryBuilder().delete().from('blog').execute();
         throw new HttpException("Date is clear",HttpStatus.NO_CONTENT)
         }
 }

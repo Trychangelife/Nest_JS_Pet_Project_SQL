@@ -1,5 +1,6 @@
 import { CommandHandler } from "@nestjs/cqrs"
 import { PostRepository } from "src/posts/repositories/posts.repository"
+import { PostsRepositorySql } from "src/posts/repositories/posts.sql.repository"
 import { LIKES } from "src/utils/types"
 
 export class LikeDislikeForPostCommand {
@@ -14,10 +15,10 @@ export class LikeDislikeForPostCommand {
 
 @CommandHandler(LikeDislikeForPostCommand)
 export class LikeDislikeForPostUseCase {
-    constructor(protected postsRepository: PostRepository) { }
+    constructor(protected postsRepository: PostsRepositorySql) { }
 
-    async execute(command: LikeDislikeForPostCommand): Promise<string | object> {
-        return await this.postsRepository.like_dislike(command.postId, command.likeStatus, command.userId, command.login)
-    }
+    // async execute(command: LikeDislikeForPostCommand): Promise<string | object> {
+    //     return await this.postsRepository.like_dislike(command.postId, command.likeStatus, command.userId, command.login)
+    // }
 }
 

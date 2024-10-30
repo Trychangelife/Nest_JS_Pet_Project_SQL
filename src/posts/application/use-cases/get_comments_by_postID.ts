@@ -1,5 +1,6 @@
 import { CommandHandler } from "@nestjs/cqrs"
 import { PostRepository } from "src/posts/repositories/posts.repository"
+import { PostsRepositorySql } from "src/posts/repositories/posts.sql.repository"
 
 export class GetCommentByPostIdCommand {
     constructor(
@@ -15,14 +16,14 @@ export class GetCommentByPostIdCommand {
 
 @CommandHandler(GetCommentByPostIdCommand)
 export class GetCommentByPostIdUseCase {
-    constructor(protected postsRepository: PostRepository) { }
+    constructor(protected postsRepository: PostsRepositorySql) { }
 
-    async execute(command: GetCommentByPostIdCommand): Promise<object | boolean> {
-        let skip = 0
-        if (command.page && command.pageSize) {
-            skip = (command.page - 1) * command.pageSize
-        }
-        return await this.postsRepository.takeCommentByIdPost(command.postId, skip, command.pageSize, command.page, command.userId, command.sortBy, command.sortDirection)
-    }
+    // async execute(command: GetCommentByPostIdCommand): Promise<object | boolean> {
+    //     let skip = 0
+    //     if (command.page && command.pageSize) {
+    //         skip = (command.page - 1) * command.pageSize
+    //     }
+    //     return await this.postsRepository.takeCommentByIdPost(command.postId, skip, command.pageSize, command.page, command.userId, command.sortBy, command.sortDirection)
+    // }
 }
 

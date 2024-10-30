@@ -17,7 +17,6 @@ export const deviceView = {
 export class SecurityDeviceRepository {
 
     constructor ( 
-    @InjectModel('RefreshToken') protected refreshTokenModel: Model<RefreshTokenStorageType>,
     @InjectDataSource() protected dataSource: DataSource
     ) {   }
 
@@ -36,7 +35,6 @@ export class SecurityDeviceRepository {
           lastActiveDate: device.last_activate_date,
           deviceId: device.device_id,
       }));
-      console.log(resultView)
       return resultView;
   }
   async terminateAllSession(userId: string, deviceId: string): Promise<boolean> {

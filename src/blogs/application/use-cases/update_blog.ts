@@ -1,5 +1,5 @@
 import { CommandHandler } from "@nestjs/cqrs"
-import { BlogsRepository } from "src/blogs/repositories/blogs.repository"
+import { BlogsRepositorySql } from "src/blogs/repositories/blogs.sql.repository"
 
 
 
@@ -11,16 +11,11 @@ export class UpdateBlogCommand {
 
 @CommandHandler(UpdateBlogCommand)
 export class UpdateBlogUseCase {
-    constructor (protected bloggerRepository: BlogsRepository ) {}
+    constructor (protected bloggerRepository: BlogsRepositorySql ) {}
 
-    async execute(command: UpdateBlogCommand): Promise<string> {
+    async execute(command: UpdateBlogCommand): Promise<boolean> {
         const afterUpdate = await this.bloggerRepository.changeBlogger(command.id, command.name, command.websiteUrl, command.description)
-        if (afterUpdate == true) {
-            return "update";
-        }
-        else {
-            return "404"
-        }
+        return afterUpdate
     }
 }
 

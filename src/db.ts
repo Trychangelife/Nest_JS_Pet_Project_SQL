@@ -10,19 +10,19 @@ import { BlogsType } from "./blogs/dto/BlogsType";
 
 
 
-export const blogsSchema = new mongoose.Schema<BlogsType>({
-    id: {type:String, required:true},
-    name: {type:String, required:true},
-    description: {type:String, required: true},
-    websiteUrl: {type:String, required:true},
-    createdAt: {type: String, required: true},
-    isMembership: {type: Boolean, required: true},
-    blogOwnerInfo: {
-        userId: {type: String},
-        userLogin: {type: String}
-    }
+// export const blogsSchema = new mongoose.Schema<BlogsType>({
+//     id: {type:String, required:true},
+//     name: {type:String, required:true},
+//     description: {type:String, required: true},
+//     websiteUrl: {type:String, required:true},
+//     createdAt: {type: String, required: true},
+//     isMembership: {type: Boolean, required: true},
+//     blogOwnerInfo: {
+//         userId: {type: String},
+//         userLogin: {type: String}
+//     }
 
-})
+// })
 export const postSchema = new mongoose.Schema<PostsType>({
     id: {type:String, required:true},
     title: {type:String},
@@ -31,7 +31,7 @@ export const postSchema = new mongoose.Schema<PostsType>({
     blogId: {type:String, required:true},
     blogName: {type:String, required:true},
     createdAt: {type: String, required: true},
-    authorUserId: {type: String, required: false},
+    authorUserId: {type: Number, required: false},
     extendedLikesInfo: {
         likesCount: {type: Number, required:true, default: 0},
         dislikesCount: {type: Number, required:true, default: 0},
@@ -150,17 +150,17 @@ export const newPasswordSchema = new mongoose.Schema<NewPasswordType>({
     recoveryCode: {type: String, required: true}
 })
 
-export const bloggerModel = mongoose.model('blogs', blogsSchema)
-export const postsModel = mongoose.model('posts', postSchema)
-export const usersModel = mongoose.model('users', usersSchema)
-export const commentsModel = mongoose.model('comments', commentsSchema)
-export const registrationDataModel = mongoose.model('registrationData', registrationDataSchema)
-export const authDataModel = mongoose.model('authData', authDataSchema)
-export const emailSendModel = mongoose.model('emailSend', emailSendSchema)
-export const codeConfirmModel = mongoose.model('confirmAttemptLog', codeConfirmSchema)
-export const refreshTokenModel = mongoose.model('refreshToken', refreshTokenSchema)
-export const recoveryPasswordModel = mongoose.model('recoveryPassword', recoveryPasswordSchema)
-export const newPasswordModel = mongoose.model('newPassword', newPasswordSchema)
+// export const bloggerModel = mongoose.model('blogs', blogsSchema)
+// export const postsModel = mongoose.model('posts', postSchema)
+// export const usersModel = mongoose.model('users', usersSchema)
+// export const commentsModel = mongoose.model('comments', commentsSchema)
+// export const registrationDataModel = mongoose.model('registrationData', registrationDataSchema)
+// export const authDataModel = mongoose.model('authData', authDataSchema)
+// export const emailSendModel = mongoose.model('emailSend', emailSendSchema)
+// export const codeConfirmModel = mongoose.model('confirmAttemptLog', codeConfirmSchema)
+// export const refreshTokenModel = mongoose.model('refreshToken', refreshTokenSchema)
+// export const recoveryPasswordModel = mongoose.model('recoveryPassword', recoveryPasswordSchema)
+// export const newPasswordModel = mongoose.model('newPassword', newPasswordSchema)
 
 
 // export async function runDb () {

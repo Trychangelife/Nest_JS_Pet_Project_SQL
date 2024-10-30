@@ -35,7 +35,7 @@ export class AuthController {
     async authorization(@Request() req, @Body() DataUser: AuthForm, @Res() res) {
         //await this.authService.informationAboutAuth(req.ip, DataUser.loginOrEmail);
         const ip = req.ip
-        const aboutDevice = req.headers['user-agent']
+        const userAgent = req.headers['user-agent']
         //const checkIP = await this.authService.counterAttemptAuth(req.ip, DataUser.loginOrEmail);
         const checkIP = true 
         if (checkIP) {
@@ -46,7 +46,7 @@ export class AuthController {
             }
             else if (foundUser && user) {
                 const accessToken = await this.jwtService.accessToken(foundUser);
-                const refreshToken = await this.jwtService.refreshToken(foundUser, ip, aboutDevice);
+                const refreshToken = await this.jwtService.getFirstRefreshToken(foundUser, ip, userAgent);
                 res
                     .cookie("refreshToken", refreshToken, {
                         httpOnly: true,
@@ -105,7 +105,7 @@ export class AuthController {
             //res.status(400).json({ errorsMessages:  [{ message: "Login or email already use", field: `${user.email}` }] });
         }
         else if (result == null) {
-            throw new HttpException("To many requests", HttpStatus.TOO_MANY_REQUESTS)
+            throw new HttpException("Something with data provided ", HttpStatus.BAD_REQUEST)
         }
         else {
             res
@@ -216,7 +216,6 @@ export class AuthController {
             }
         }
         else {
-            console.log("429")
             throw new HttpException("To many requests", HttpStatus.TOO_MANY_REQUESTS)
         }
     }

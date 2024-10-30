@@ -55,13 +55,14 @@ describe('SuperAdminUsersController (e2e)', () => {
         .set('Authorization', 'Basic ' + Buffer.from('admin:qwerty').toString('base64')) // Basic auth
         .expect(HttpStatus.CREATED);
 
-      console.log(response.body);  // Выводим ответ сервера в консоль
+      // console.log(response.body);  // Выводим ответ сервера в консоль
 
       expect(response.body).toEqual(
         expect.objectContaining({
-          id: expect.any(Number),
+          id: expect.any(String),
           login: 'testuser',
           email: 'testuser@example.com',
+          createdAt: expect.any(String)
         })
       );
     });

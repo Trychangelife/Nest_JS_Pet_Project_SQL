@@ -6,7 +6,6 @@ import * as bcrypt from "bcrypt"
 import { ObjectId } from "mongodb"
 import { User } from "src/users/dto/UserClass"
 import { v4 as uuidv4 } from "uuid"
-import { SuperAdminUsersRepository } from "../../repositories/SuperAdmin.user.repository"
 import { SuperAdminUsersRepositorySql } from "../../repositories/SuperAdmin.user.repositorySQL"
 import { UserAlreadyExistsException } from "src/exception_filters/UserException"
 

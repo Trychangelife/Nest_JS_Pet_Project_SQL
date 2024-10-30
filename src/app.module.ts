@@ -8,7 +8,6 @@ import { MailerModule } from '@nest-modules/mailer';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BlogsRepository } from './blogs/repositories/blogs.repository';
 import { PostRepository } from './posts/repositories/posts.repository';
 import { PostsRepositorySql } from './posts/repositories/posts.sql.repository';
 import { BlogsController } from './blogs/blogs.controller';
@@ -16,7 +15,7 @@ import { PostController } from './posts/posts.controller';
 import { BloggersController } from './bloggers/bloggers.controller';
 import { BlogsService } from './blogs/application/blogs.service';
 import { PostsService } from './posts/application/posts.service';
-import { authDataSchema, blogsSchema, commentsSchema, postSchema, refreshTokenSchema, usersSchema, registrationDataSchema, emailSendSchema, codeConfirmSchema, recoveryPasswordSchema, newPasswordSchema } from './db';
+import { authDataSchema, commentsSchema, postSchema, refreshTokenSchema, usersSchema, registrationDataSchema, emailSendSchema, codeConfirmSchema, recoveryPasswordSchema, newPasswordSchema } from './db';
 import { UsersService } from './users/application/users.service';
 import { AuthService } from './auth/application/auth.service';
 import { CommentsService } from './comments/application/comments.service';
@@ -68,7 +67,6 @@ import { GetUserByUserIdUseCase } from './users/application/use-cases/Get_user_b
 import { GetAllBlogsforBloggerUseCase } from './bloggers/application/use-cases/get_all_blogs';
 import { SuperAdminUsersController } from './superAdmin/SAusers/sa.users.controller';
 import { CreateUserSAUseCase } from './superAdmin/SAusers/application/useCases/create_user_SA';
-import { SuperAdminUsersRepository } from './superAdmin/SAusers/repositories/SuperAdmin.user.repository';
 import { GetAllUsersAsSuperAdminUseCase } from './superAdmin/SAusers/application/useCases/get_all_user_SA';
 import { DeleteUserAsSuperAdminUseCase } from './superAdmin/SAusers/application/useCases/delete_user_SA';
 import { BanUserAsSuperAdminUseCase } from './superAdmin/SAusers/application/useCases/ban_user_SA';
@@ -114,7 +112,7 @@ const emailProviders = [EmailService, EmailManager, EmailAdapter,]
 const authProviders = [AuthService,]
 const securityDevicesProviders = [SecurityDeviceService, SecurityDeviceRepository,]
 const blogsSuperAdminProviders = [BlogsSuperAdminRepository,]
-const usersSuperAdminProviders = [SuperAdminUsersRepository, SuperAdminUsersRepositorySql]
+const usersSuperAdminProviders = [SuperAdminUsersRepositorySql]
 
 
 @Module({
@@ -167,20 +165,21 @@ const usersSuperAdminProviders = [SuperAdminUsersRepository, SuperAdminUsersRepo
     isGlobal: true,
     envFilePath: '.env'
   }),
-  MongooseModule.forRoot(uri, options),
-  MongooseModule.forFeature([
-    {name: 'Blogs', schema: blogsSchema}, 
-    {name: 'Posts', schema: postSchema}, 
-    {name: 'Comments', schema: commentsSchema}, 
-    {name: 'Users', schema: usersSchema}, 
-    {name: 'RefreshToken', schema: refreshTokenSchema},
-    {name: 'RegistrationData', schema: registrationDataSchema}, 
-    {name: 'AuthData', schema: authDataSchema},
-    {name: 'CodeConfirm', schema: codeConfirmSchema},
-    {name: 'EmailSend', schema: emailSendSchema},
-    {name: 'RecoveryPassword', schema: recoveryPasswordSchema},
-    {name: 'NewPassword', schema: newPasswordSchema}
-  ]),
+
+  //MongooseModule.forRoot(uri, options),
+  //MongooseModule.forFeature([
+    //{name: 'Blogs', schema: blogsSchema}, 
+    // {name: 'Posts', schema: postSchema}, 
+    // {name: 'Comments', schema: commentsSchema}, 
+    // {name: 'Users', schema: usersSchema}, 
+    // {name: 'RefreshToken', schema: refreshTokenSchema},
+    // {name: 'RegistrationData', schema: registrationDataSchema}, 
+    // {name: 'AuthData', schema: authDataSchema},
+    // {name: 'CodeConfirm', schema: codeConfirmSchema},
+    // {name: 'EmailSend', schema: emailSendSchema},
+    // {name: 'RecoveryPassword', schema: recoveryPasswordSchema},
+    // {name: 'NewPassword', schema: newPasswordSchema}
+  //]),
   JwtModule.register({
     secret: process.env.JWT_SECRET,
     signOptions: {
@@ -193,8 +192,8 @@ const usersSuperAdminProviders = [SuperAdminUsersRepository, SuperAdminUsersRepo
 })],
   controllers: [AppController, BlogsController, PostController, UsersController, AuthController, CommentsController, FullDataController, SecurityDeviceController, BloggersController, SuperAdminBlogsController, SuperAdminUsersController],
   providers: [AppService,
-    {provide: BlogsRepository, useClass: process.env.USE_DATABASE === 'SQL' ? BlogsRepositorySql : BlogsRepository},
-    {provide: PostRepository, useClass: process.env.USE_DATABASE === 'SQL' ? PostsRepositorySql: PostRepository},
+    BlogsRepositorySql,
+   PostsRepositorySql,
     JwtServiceClass, FullDeleteModule, BlogIsExistRule, 
     
     // Classic

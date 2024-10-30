@@ -4,6 +4,7 @@ import { LIKES } from "src/utils/types"
 import { Comments } from "src/comments/dto/CommentsClass"
 import { CommentsType } from "src/comments/dto/CommentsType"
 import { v4 as uuidv4 } from "uuid"
+import { PostsRepositorySql } from "src/posts/repositories/posts.sql.repository"
 
 export class CreateCommentForSpecificPostCommand {
     constructor(
@@ -17,18 +18,18 @@ export class CreateCommentForSpecificPostCommand {
 
 @CommandHandler(CreateCommentForSpecificPostCommand)
 export class CreateCommentForSpecificPostUseCase {
-    constructor(protected postsRepository: PostRepository) { }
+    constructor(protected postsRepository: PostsRepositorySql) { }
 
-    async execute(command: CreateCommentForSpecificPostCommand): Promise<CommentsType | boolean> {
-        const foundPost = await this.postsRepository.targetPosts(command.postId)
-        if (foundPost) {
-            // CREATE ON CLASS
-            const createdComment = new Comments(uuidv4(), command.content, { userId: command.userId, userLogin: command.userLogin }, (new Date()).toISOString(), command.postId, { likesCount: 0, dislikesCount: 0, myStatus: LIKES.NONE })
-            return this.postsRepository.createCommentForSpecificPost(createdComment)
-        }
-        else {
-            return false
-        }
-    }
+    // async execute(command: CreateCommentForSpecificPostCommand): Promise<CommentsType | boolean> {
+    //     const foundPost = await this.postsRepository.targetPosts(command.postId)
+    //     if (foundPost) {
+    //         // CREATE ON CLASS
+    //         const createdComment = new Comments(uuidv4(), command.content, { userId: command.userId, userLogin: command.userLogin }, (new Date()).toISOString(), command.postId, { likesCount: 0, dislikesCount: 0, myStatus: LIKES.NONE })
+    //         return this.postsRepository.createCommentForSpecificPost(createdComment)
+    //     }
+    //     else {
+    //         return false
+    //     }
+    // }
 }
 

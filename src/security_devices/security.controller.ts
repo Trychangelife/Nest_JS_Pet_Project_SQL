@@ -18,8 +18,7 @@ export class SecurityDeviceController {
         protected jwtServiceClass: JwtServiceClass,
         protected usersRepository: UsersRepository, 
         protected securityService: SecurityDeviceService,
-        private commandBus: CommandBus,
-        @InjectModel('RefreshToken') protected refreshTokenModel: Model<RefreshTokenStorageType>) {
+        private commandBus: CommandBus,) {
     }
     //GET - список всех активных сессий пользователя
     @Get('devices')

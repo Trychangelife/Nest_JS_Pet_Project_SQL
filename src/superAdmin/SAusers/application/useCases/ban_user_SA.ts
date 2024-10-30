@@ -1,5 +1,5 @@
 import { CommandHandler } from "@nestjs/cqrs"
-import { SuperAdminUsersRepository } from "../../repositories/SuperAdmin.user.repository"
+import { SuperAdminUsersRepositorySql } from "../../repositories/SuperAdmin.user.repositorySQL"
 
 export class BanUserAsSuperAdminCommand {
     constructor(
@@ -12,7 +12,7 @@ export class BanUserAsSuperAdminCommand {
 
 @CommandHandler(BanUserAsSuperAdminCommand)
 export class BanUserAsSuperAdminUseCase {
-    constructor (protected usersRepository: SuperAdminUsersRepository ) {}
+    constructor (protected usersRepository: SuperAdminUsersRepositorySql ) {}
 
     async execute(command: BanUserAsSuperAdminCommand): Promise<boolean> {
         return await this.usersRepository.banUser(command.id, command.reason, command.isBanned)

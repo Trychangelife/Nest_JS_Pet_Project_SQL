@@ -58,7 +58,7 @@ export class BlogsRepositorySql {
         INSERT INTO "Bloggers" (name, "websiteUrl")
         VALUES ($1, $2)
         RETURNING *
-        `, [newBlogger.name, newBlogger.websiteUrl])
+        `, [newBlogger.name, newBlogger.website_url])
         return bloggerAfterCreate
     }
     async changeBlogger(id: string, name: any, websiteUrl: string): Promise<boolean> {

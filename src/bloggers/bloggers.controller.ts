@@ -112,7 +112,7 @@ export class BloggersController {
       const blogWithUserId: BloggersType = await this.commandBus.execute(new GetTargetBlogCommand(params.blogId, userId))
       const blogWithBlogId: BloggersType = await this.commandBus.execute(new GetTargetBlogCommand(params.blogId, null))
       if (!blogWithBlogId) {throw new HttpException('Check URI param, blog not found',HttpStatus.NOT_FOUND)}
-      if (userId !== blogWithUserId?.blogOwnerInfo.userId) {throw new HttpException('Access denied',HttpStatus.FORBIDDEN)}
+      if (userId !== blogWithUserId?.owner_user_id) {throw new HttpException('Access denied',HttpStatus.FORBIDDEN)}
       if (!blogWithUserId) {throw new HttpException('Blog NOT FOUND',HttpStatus.NOT_FOUND)}
       const createPostForSpecificBlogger: string | object | null = await this.commandBus.execute(new CreatePostByBloggerCommand(post.title, post.content, post.shortDescription, params.blogId));
       return createPostForSpecificBlogger;

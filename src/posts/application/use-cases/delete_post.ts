@@ -1,5 +1,6 @@
 import { CommandHandler } from "@nestjs/cqrs"
 import { PostRepository } from "src/posts/repositories/posts.repository"
+import { PostsRepositorySql } from "src/posts/repositories/posts.sql.repository"
 
 
 export class DeletePostCommand {
@@ -11,11 +12,11 @@ export class DeletePostCommand {
 
 @CommandHandler(DeletePostCommand)
 export class DeletePostUseCase {
-    constructor (protected postsRepository: PostRepository ) {}
+    constructor (protected postsRepository: PostsRepositorySql ) {}
 
-    async execute(command: DeletePostCommand): Promise<boolean> {
-            return await this.postsRepository.deletePost(command.deleteId)
+    // async execute(command: DeletePostCommand): Promise<boolean> {
+    //         return await this.postsRepository.deletePost(command.deleteId)
     
-        }
+    //     }
 }
 

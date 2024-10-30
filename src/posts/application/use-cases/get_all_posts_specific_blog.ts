@@ -1,5 +1,6 @@
 import { CommandHandler } from "@nestjs/cqrs"
 import { PostRepository } from "src/posts/repositories/posts.repository"
+import { PostsRepositorySql } from "src/posts/repositories/posts.sql.repository"
 
 
 export class GetAllPostsSpecificBlogCommand {
@@ -14,15 +15,15 @@ export class GetAllPostsSpecificBlogCommand {
 
 @CommandHandler(GetAllPostsSpecificBlogCommand)
 export class GetAllPostsSpecificBlogUseCase {
-    constructor (protected postsRepository: PostRepository ) {}
+    constructor (protected postsRepository: PostsRepositorySql ) {}
 
-    async execute(command: GetAllPostsSpecificBlogCommand): Promise<object | undefined> {
-        let skip = 0
-        if (command.page && command.pageSize) {
-            skip = (command.page - 1) * command.pageSize
-        }
+    // async execute(command: GetAllPostsSpecificBlogCommand): Promise<object | undefined> {
+    //     let skip = 0
+    //     if (command.page && command.pageSize) {
+    //         skip = (command.page - 1) * command.pageSize
+    //     }
 
-        return await this.postsRepository.allPostsSpecificBlogger(command.bloggerId, skip, command.pageSize, command.page, command.userId)
-    }
+    //     return await this.postsRepository.allPostsSpecificBlogger(command.bloggerId, skip, command.pageSize, command.page, command.userId)
+    // }
 }
 

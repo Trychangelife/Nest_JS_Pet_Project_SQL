@@ -1,8 +1,7 @@
 import { CommandHandler } from "@nestjs/cqrs"
-import { BlogsType } from "src/blogs/dto/BlogsType"
-import { BlogsRepository } from "src/blogs/repositories/blogs.repository"
+import { BlogsType, BlogsTypeView } from "src/blogs/dto/BlogsType"
 import { BlogsClass } from "src/blogs/dto/BlogsClass"
-import { v4 as uuidv4 } from "uuid"
+import { BlogsRepositorySql } from "src/blogs/repositories/blogs.sql.repository"
 
 
 export class CreateBlogCommand {
@@ -13,11 +12,11 @@ export class CreateBlogCommand {
 
 @CommandHandler(CreateBlogCommand)
 export class CreateBlogUseCase {
-    constructor (protected bloggerRepository: BlogsRepository ) {}
+    constructor (protected bloggerRepository: BlogsRepositorySql ) {}
 
-    async execute(command: CreateBlogCommand): Promise<BlogsType | null> {
+    async execute(command: CreateBlogCommand): Promise<BlogsTypeView | null> {
         // Построено на классе
-        const newBlogs = new BlogsClass(uuidv4(), command.name, command.description, command.websiteUrl, (new Date()).toISOString(), false, {userId: null, userLogin: null})
+        const newBlogs = new BlogsClass(1, command.name, command.description, command.websiteUrl, (new Date()).toISOString(), false, null, null)
         const createdBlogs = await this.bloggerRepository.createBlogger(newBlogs)
         return createdBlogs
     }

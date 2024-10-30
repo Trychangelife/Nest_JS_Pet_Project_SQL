@@ -1,8 +1,9 @@
-import { BlogsRepository } from "../repositories/blogs.repository"
+
 import { v4 as uuidv4 } from "uuid"
 import { Injectable, Scope } from "@nestjs/common"
 import { BlogsClass } from "src/blogs/dto/BlogsClass"
 import { BlogsType } from "src/blogs/dto/BlogsType"
+import { BlogsRepositorySql } from "../repositories/blogs.sql.repository"
 
 
 
@@ -10,7 +11,7 @@ import { BlogsType } from "src/blogs/dto/BlogsType"
 export class BlogsService { 
 
     
-    constructor (protected bloggerRepository: BlogsRepository) {
+    constructor (protected bloggerRepository: BlogsRepositorySql) {
     }
 
     // async getAllBlogs(pageSize: number, pageNumber: number, searchNameTerm?: string | null, sortBy?: string, sortDirection?: string): Promise<object> {

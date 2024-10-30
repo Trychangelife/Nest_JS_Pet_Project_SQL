@@ -1,5 +1,4 @@
 import { CommandHandler } from "@nestjs/cqrs"
-import { BlogsRepository } from "src/blogs/repositories/blogs.repository"
 import { UsersType } from "src/users/dto/UsersType"
 import { UsersRepository } from "src/users/repositories/users.repository"
 

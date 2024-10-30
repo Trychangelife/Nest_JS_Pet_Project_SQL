@@ -10,7 +10,7 @@ export class PostClass {
         public blogId: string,
         public blogName: string,
         public createdAt: string,
-        public authorUserId: string,
+        public authorUserId: number,
         public extendedLikesInfo: {
             likesCount: number;
             dislikesCount: number;

@@ -12,14 +12,14 @@ export class GetAllBlogsSuperAdminCommand {
 export class GetAllBlogsSuperAdminUseCase {
     constructor (protected blogsSuperAdminRepository: BlogsSuperAdminRepository ) {}
 
-    async execute(command: GetAllBlogsSuperAdminCommand): Promise<object> {
-        let skip = 0
-        if (command.pageNumber && command.pageSize) {
-            skip = (command.pageNumber - 1) * command.pageSize
-        }
-        const blogs = await this.blogsSuperAdminRepository.getAllBlogs(skip, command.pageSize, command.searchNameTerm, command.pageNumber, command.sortBy, command.sortDirection)
-        return blogs
-    }
+    // async execute(command: GetAllBlogsSuperAdminCommand): Promise<object> {
+    //     let skip = 0
+    //     if (command.pageNumber && command.pageSize) {
+    //         skip = (command.pageNumber - 1) * command.pageSize
+    //     }
+    //     const blogs = await this.blogsSuperAdminRepository.getAllBlogs(skip, command.pageSize, command.searchNameTerm, command.pageNumber, command.sortBy, command.sortDirection)
+    //     return blogs
+    // }
 }
 
 

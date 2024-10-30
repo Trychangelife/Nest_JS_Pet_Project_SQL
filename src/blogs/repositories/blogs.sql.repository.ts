@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common"
 import { InjectDataSource } from "@nestjs/typeorm"
-import { BlogsType } from "src/blogs/dto/BlogsType"
+import { BlogsType, BlogsTypeView } from "src/blogs/dto/BlogsType"
 import { DataSource } from "typeorm"
 
 
@@ -8,95 +8,154 @@ import { DataSource } from "typeorm"
 export class BlogsRepositorySql {
 
     constructor(@InjectDataSource() protected dataSource: DataSource) {
-        
+
     }
 
-    async allBloggers(skip: number, limit?: number, searchNameTerm?: string | null, page?: number): Promise<object> {
-        const totalCount = await this.dataSource.query(`SELECT COUNT(*) FROM "Bloggers"`)
-        const keys = Object.keys(totalCount)
-        const pagesCount = Math.ceil(totalCount[keys[0]].count / limit)
-        if (searchNameTerm !== null) {
-            const getAllBloggers = await this.dataSource.query(
-                `
-                SELECT * 
-                FROM "Bloggers"
-                WHERE name LIKE '${'%'+ searchNameTerm + '%'}'
-                ORDER BY id
-                LIMIT $1 OFFSET $2
-                `
-            , [limit, skip])
-            return { pagesCount, page: page, pageSize: limit, totalCount: parseInt(totalCount[keys[0]].count) , items: getAllBloggers }
-        }
-        else {
-        const getAllBloggers = await this.dataSource.query(
+    async allBlogs(
+        skip: number, 
+        limit: number = 10, 
+        searchNameTerm?: string | null, 
+        pageNumber: number = 1, 
+        sortBy: string = 'created_at', 
+        sortDirection: string = 'desc'
+    ): Promise<object> {
+    
+        // Базовый SQL-запрос и дополнительные параметры
+        const searchCondition = searchNameTerm ? `WHERE name ILIKE $1` : '';
+        const queryParams = searchNameTerm ? [`%${searchNameTerm}%`, limit, skip] : [limit, skip];
+    
+        // Запрос для общего количества блогов
+        const [totalCountResult] = await this.dataSource.query(`SELECT COUNT(*)::int AS count FROM "blog"`);
+        const totalCount = parseInt(totalCountResult.count, 10);
+        const pagesCount = Math.ceil(totalCount / limit);
+    
+        // Основной SQL-запрос для получения блогов с учетом параметров
+        const getAllBlog = await this.dataSource.query(
             `
             SELECT * 
-            FROM "Bloggers"
-            ORDER BY id
-            LIMIT $1 OFFSET $2
-            `
-        , [limit, skip])
-        return { pagesCount, page: page, pageSize: limit, totalCount: parseInt(totalCount[keys[0]].count) , items: getAllBloggers }
+            FROM "blog"
+            ${searchCondition}
+            ORDER BY ${sortBy} ${sortDirection}
+            LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}
+            `,
+            queryParams
+        );
+    
+        // Возвращаем форматированный объект
+        return {
+            pagesCount,
+            page: pageNumber,
+            pageSize: limit,
+            totalCount,
+            items: getAllBlog.map(blog => ({
+                id: blog.id.toString(),
+                name: blog.name,
+                description: blog.description,
+                websiteUrl: blog.website_url,
+                createdAt: blog.created_at,
+                isMembership: blog.is_membership,
+            }))
+        };
     }
-     }
-    async targetBloggers(id: string): Promise<object | undefined> {
 
-        const blogger = await this.dataSource.query(
+    
+    async targetBlog(id: string, userId?: string): Promise<object | undefined> {
+
+        const [blog] = await this.dataSource.query(
             `
         SELECT * 
-        FROM "Bloggers" WHERE id = $1
+        FROM "blog" WHERE id = $1
             `, [id])
-        if (blogger !== null) {
-            return blogger
+        if (blog !== null) {
+
+            const resultView: BlogsTypeView = {
+                id: blog.id.toString(),
+                name: blog.name,
+                description: blog.description,
+                websiteUrl: blog.website_url,
+                createdAt: blog.created_at,
+                isMembership: blog.is_membership
+            }
+            return resultView
         }
         else {
             return
         }
     }
-    async createBlogger(newBlogger: BlogsType): Promise<BlogsType | null> {
-        const bloggerAfterCreate = await this.dataSource.query(`
-        INSERT INTO "bloggers" (name, "website_url")
-        VALUES ($1, $2)
+    async createBlogger(newBlogger: BlogsType): Promise<BlogsTypeView | null> {
+        
+        
+        const [bloggerAfterCreate] = await this.dataSource.query(`
+        INSERT INTO "blog" (name, "website_url", description, created_at)
+        VALUES ($1, $2, $3, $4)
         RETURNING *
-        `, [newBlogger.name, newBlogger.websiteUrl])
-        return bloggerAfterCreate
-    }
-    async changeBlogger(id: string, name: any, websiteUrl: string): Promise<boolean> {
+        `, [newBlogger.name, newBlogger.website_url, newBlogger.description, newBlogger.created_at])
 
-        const update = await this.dataSource.query(`
-        UPDATE "Bloggers"
-        SET name = $2, "websiteUrl" = $3
-        WHERE id = $1
-        RETURNING *
-        `,[id, name,websiteUrl])
-
-        if (update[0][0].name === name && update[0][0].websiteUrl === websiteUrl) {
-            return true
+        const resultView: BlogsTypeView = {
+            id: bloggerAfterCreate.id.toString(),
+            name: bloggerAfterCreate.name,
+            description: bloggerAfterCreate.description,
+            websiteUrl: bloggerAfterCreate.website_url,
+            createdAt: bloggerAfterCreate.created_at,
+            isMembership: bloggerAfterCreate.is_membership
         }
-        else {
-            return false
+
+        return resultView
+    }
+
+    async changeBlogger(
+        id: string, 
+        name: string, 
+        websiteUrl: string, 
+        description: string
+    ): Promise<boolean> {
+    
+        const existingBlog = await this.dataSource.query(
+            `SELECT id FROM "blog" WHERE id = $1`, 
+            [id]
+        );
+        
+        if (existingBlog.length === 0) {
+            // Если блог с указанным id не найден, возвращаем false сразу
+            return false;
         }
         
+        // Выполняем обновление, если объект найден
+        const updatedBlogs = await this.dataSource.query(
+            `
+            UPDATE "blog"
+            SET name = $2, website_url = $3, description = $4
+            WHERE id = $1
+            RETURNING *
+            `,
+            [id, name, websiteUrl, description]
+        );
+        
+        return updatedBlogs.length > 0;
+        
     }
+    
+    
     async deleteBlogger(id: string): Promise<boolean> {
-        const findUserAfterDelete = await this.dataSource.query(`SELECT id, name, "websiteUrl" FROM "Bloggers" WHERE id = $1`,[id])
+        const findUserAfterDelete = await this.dataSource.query(`SELECT id, name, "websiteUrl" FROM "blog" WHERE id = $1`, [id])
         if (findUserAfterDelete.length < 1) {
             return false
         }
         else {
-            await this.dataSource.query(`DELETE FROM "Bloggers" WHERE id = $1`, [id])
+            await this.dataSource.query(`DELETE FROM "blog" WHERE id = $1`, [id])
             return true
         }
     }
+    
     async deleteAllBlogger(): Promise<boolean> {
-        await this.dataSource.query(`TRUNCATE TABLE "Bloggers"`)
-        const checkTableAfterFullClear = await this.dataSource.query(`SELECT COUNT(*) FROM "Bloggers"`)
+        await this.dataSource.query(`TRUNCATE TABLE "blog"`)
+        const checkTableAfterFullClear = await this.dataSource.query(`SELECT COUNT(*) FROM "blog"`)
         if (checkTableAfterFullClear > 1) {
             return false
         }
         else {
             return true
         }
-        
+
     }
 }

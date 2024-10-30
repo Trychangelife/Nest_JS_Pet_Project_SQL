@@ -7,7 +7,6 @@ import { RegistrationDataType, AuthDataType, ConfirmedAttemptDataType, EmailSend
 import { BanStatus } from "src/superAdmin/SAblog/dto/banStatus"
 import { InjectDataSource } from "@nestjs/typeorm"
 import { DataSource } from "typeorm"
-import { UserAlreadyExistsException } from "src/exception_filters/UserException"
 
 
 @Injectable()

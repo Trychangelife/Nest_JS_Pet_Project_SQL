@@ -15,9 +15,9 @@ export class GetCommentCommand {
 export class GetCommentUseCase {
     constructor (protected commentsRepository: CommentsRepository ) {}
 
-    async execute(command: GetCommentCommand): Promise<CommentsType | null> {
-        return await this.commentsRepository.commentsByUserId(command.id, command.userId)
-    }
+    // async execute(command: GetCommentCommand): Promise<CommentsType | null> {
+    //     return await this.commentsRepository.commentsByUserId(command.id, command.userId)
+    // }
 }
 
 

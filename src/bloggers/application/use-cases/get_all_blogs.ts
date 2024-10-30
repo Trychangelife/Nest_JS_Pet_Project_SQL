@@ -1,6 +1,5 @@
 import { CommandHandler } from "@nestjs/cqrs"
-import { BlogsByBloggerRepository } from "src/bloggers/repositories/bloggers.repository"
-import { BlogsRepository } from "src/blogs/repositories/blogs.repository"
+import { BlogsRepositorySql } from "src/blogs/repositories/blogs.sql.repository"
 
 
 export class GetAllBlogsforBloggerCommand {
@@ -11,16 +10,16 @@ export class GetAllBlogsforBloggerCommand {
 
 @CommandHandler(GetAllBlogsforBloggerCommand)
 export class GetAllBlogsforBloggerUseCase {
-    constructor (protected bloggerRepository: BlogsByBloggerRepository ) {}
+    constructor (protected bloggerRepository: BlogsRepositorySql ) {}
 
-    async execute(command: GetAllBlogsforBloggerCommand): Promise<object> {
-        let skip = 0
-        if (command.pageNumber && command.pageSize) {
-            skip = (command.pageNumber - 1) * command.pageSize
-        }
-        const blogs = await this.bloggerRepository.getAllBlogsForSpecificBlogger(skip, command.pageSize, command.searchNameTerm, command.pageNumber, command.sortBy, command.sortDirection, command.userId)
-        return blogs
-    }
+    // async execute(command: GetAllBlogsforBloggerCommand): Promise<object> {
+    //     let skip = 0
+    //     if (command.pageNumber && command.pageSize) {
+    //         skip = (command.pageNumber - 1) * command.pageSize
+    //     }
+    //     const blogs = await this.bloggerRepository.getAllBlogsForSpecificBlogger(skip, command.pageSize, command.searchNameTerm, command.pageNumber, command.sortBy, command.sortDirection, command.userId)
+    //     return blogs
+    // }
 }
 
 

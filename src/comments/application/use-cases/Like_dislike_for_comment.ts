@@ -17,9 +17,9 @@ export class LikeDislikeCommentCommand {
 export class LikeDislikeCommentUseCase {
     constructor (protected commentsRepository: CommentsRepository ) {}
 
-    async execute(command: LikeDislikeCommentCommand): Promise<string | object> {
-        return await this.commentsRepository.like_dislike(command.commmentId, command.likeStatus, command.userId, command.login)
-    }
+    // async execute(command: LikeDislikeCommentCommand): Promise<string | object> {
+    //     return await this.commentsRepository.like_dislike(command.commmentId, command.likeStatus, command.userId, command.login)
+    // }
 }
 
 

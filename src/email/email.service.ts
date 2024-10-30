@@ -9,7 +9,6 @@ import { InjectDataSource } from "@nestjs/typeorm";
 @Injectable()
 export class EmailService {
     constructor(
-        @InjectModel('Users') protected usersModel: Model<UsersType>,
         @InjectDataSource() protected dataSource: DataSource,
         private emailManager: EmailManager,
     ) {}

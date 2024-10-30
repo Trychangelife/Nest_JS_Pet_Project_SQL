@@ -1,7 +1,6 @@
 
 import { sub } from "date-fns"
 import { Model } from "mongoose"
-import { usersModel } from "src/db"
 import { AuthDataType, ConfirmedAttemptDataType, EmailSendDataType, RefreshTokenStorageType, RegistrationDataType } from "src/utils/types"
 import { NewPasswordType, RecoveryPasswordType } from "src/auth/dto/RecoveryPasswordType"
 import { UsersType } from "src/users/dto/UsersType"
@@ -10,106 +9,206 @@ import { InjectModel } from "@nestjs/mongoose"
 import { DataSource } from "typeorm"
 import { InjectDataSource } from "@nestjs/typeorm"
 import { UUID } from "mongodb"
+import { BanStatus } from "src/superAdmin/SAblog/dto/banStatus"
 
 @Injectable()
 export class UsersRepository {
 
     constructor (
         @InjectDataSource() protected dataSource: DataSource,
-        @InjectModel('Users') public usersModel: Model<UsersType>,
-        @InjectModel('RegistrationData') protected registrationDataModel: Model<RegistrationDataType>,
-        @InjectModel('AuthData') protected authDataModel: Model<AuthDataType>,
-        @InjectModel('CodeConfirm') protected codeConfirmModel: Model<ConfirmedAttemptDataType>,
-        @InjectModel('EmailSend') protected emailSendModel: Model<EmailSendDataType>,
-        @InjectModel('RefreshToken') protected refreshTokenModel: Model<RefreshTokenStorageType>,
-        @InjectModel('RecoveryPassword') protected recoveryPasswordModel: Model<RecoveryPasswordType>,
-        @InjectModel('NewPassword') protected newPasswordModel: Model<NewPasswordType>
     ) {
 
     }
+    // async allUsers(
+    //     skip: number,
+    //     limit: number,
+    //     sortDirection: string = 'desc',  // Значение по умолчанию
+    //     sortingParam: string = 'createdAt',  // Значение по умолчанию
+    //     page: number,
+    //     searchLoginTerm: string = '',
+    //     searchEmailTerm: string = ''
+    //   ): Promise<object> {
+    //     const queryRunner = this.dataSource.createQueryRunner();
+
+    //     try {
+    //         await queryRunner.connect();
+
+    //         // Условие фильтрации по логину и email
+    //         let filterConditions = `WHERE 1=1`;
+    //         if (searchLoginTerm) {
+    //             filterConditions += ` AND u.login ILIKE '%' || $1 || '%'`;
+    //         }
+    //         if (searchEmailTerm) {
+    //             filterConditions += ` AND u.email ILIKE '%' || $2 || '%'`;
+    //         }
+
+    //         // // Условие по бан-статусу
+    //         // if (banStatus === BanStatus.banned) {
+    //         //     filterConditions += ` AND bi.is_banned = true`;
+    //         // } else if (banStatus === BanStatus.notBanned) {
+    //         //     filterConditions += ` AND bi.is_banned = false`;
+    //         // }
+    //         // Основной запрос для выборки пользователей с необходимыми JOIN'ами
+    //         const usersQuery = `
+    //   SELECT u.id, u.login, u.email, u.created_at
+    //   FROM users u
+    //   LEFT JOIN account_user_data ad ON u.id = ad.user_id
+    //   LEFT JOIN email_confirmation ec ON u.id = ec.user_id
+    //   LEFT JOIN recovery_password_info rpi ON u.id = rpi.user_id
+    //   LEFT JOIN ban_info bi ON u.id = bi.user_id
+    //   ${filterConditions}
+    //   ORDER BY u.${sortingParam} ${sortDirection}
+    //   LIMIT $1 OFFSET $2;
+    // `;
+    //         // Выполнение запроса на пользователей с пагинацией
+    //         const users = await queryRunner.query(
+    //             usersQuery,
+    //             [limit, skip]
+    //         );
+    //         // Запрос для подсчёта общего количества пользователей (без лимитов)
+    //         const totalCountQuery = `
+    //   SELECT COUNT(*)
+    //   FROM users u
+    //   LEFT JOIN ban_info bi ON u.id = bi.user_id
+    //   ${filterConditions};
+    // `;
+    //         const totalCountResult = await queryRunner.query(
+    //             totalCountQuery,
+    //             []
+    //         );
+    //         const totalCount = parseInt(totalCountResult[0].count, 10);
+
+    //         // Вычисление количества страниц
+    //         const pagesCount = Math.ceil(totalCount / limit);
+    //         // Формирование результата в виде ViewModel
+    //         const result = {
+    //             pagesCount: pagesCount,
+    //             page: page,
+    //             pageSize: limit,
+    //             totalCount: totalCount,
+    //             items: users.map(user => ({
+    //                 id: user.id,
+    //                 email: user.email,
+    //                 login: user.login,
+    //                 createdAt: user.created_at
+    //             }))
+    //         };
+
+    //         return result;
+
+    //     } catch (err) {
+    //         throw new Error(`Ошибка при получении списка пользователей: ${err.message}`);
+    //     } finally {
+    //         await queryRunner.release();
+    //     }
+    //   }
+
     async allUsers(
         skip: number,
         limit: number,
-        sortDirection: string = 'desc',  // Значение по умолчанию
-        sortingParam: string = 'createdAt',  // Значение по умолчанию
+        sortDirection: string,
+        sortingParam: string,
         page: number,
-        searchLoginTerm: string = '',
-        searchEmailTerm: string = ''
-      ): Promise<object> {
+        searchLoginTerm: string,
+        searchEmailTerm: string,
+        banStatus?: BanStatus
+    ): Promise<object> {
         const queryRunner = this.dataSource.createQueryRunner();
-
+        console.log(sortDirection)
         try {
             await queryRunner.connect();
-
+    
+            // Маппинг значений sortingParam на реальные названия колонок в базе данных
+            const sortingColumnsMap: Record<string, string> = {
+                createdAt: 'created_at',
+                login: 'login',
+                email: 'email'
+                // Добавьте другие поля, если нужно
+            };
+    
+            // Приведение sortingParam к корректному значению
+            const dbSortingColumn = sortingColumnsMap[sortingParam] || 'created_at';
+    
             // Условие фильтрации по логину и email
             let filterConditions = `WHERE 1=1`;
+            const queryParams = [];
+    
             if (searchLoginTerm) {
-                filterConditions += ` AND u.login ILIKE '%' || $1 || '%'`;
+                filterConditions += ` AND u.login ILIKE '%' || $${queryParams.length + 1} || '%'`;
+                queryParams.push(searchLoginTerm);
             }
             if (searchEmailTerm) {
-                filterConditions += ` AND u.email ILIKE '%' || $2 || '%'`;
+                filterConditions += ` OR u.email ILIKE '%' || $${queryParams.length + 1} || '%'`;
+                queryParams.push(searchEmailTerm);
             }
-
-            // // Условие по бан-статусу
+            // Условие по бан-статусу
             // if (banStatus === BanStatus.banned) {
             //     filterConditions += ` AND bi.is_banned = true`;
             // } else if (banStatus === BanStatus.notBanned) {
             //     filterConditions += ` AND bi.is_banned = false`;
             // }
+    
+            // Преобразование параметров limit и skip в числовой тип
+            const numericLimit = Number(limit);
+            const numericSkip = Number(skip);
+    
             // Основной запрос для выборки пользователей с необходимыми JOIN'ами
             const usersQuery = `
-      SELECT u.id, u.login, u.email, u.created_at
-      FROM users u
-      LEFT JOIN account_user_data ad ON u.id = ad.user_id
-      LEFT JOIN email_confirmation ec ON u.id = ec.user_id
-      LEFT JOIN recovery_password_info rpi ON u.id = rpi.user_id
-      LEFT JOIN ban_info bi ON u.id = bi.user_id
-      ${filterConditions}
-      ORDER BY u.${sortingParam} ${sortDirection}
-      LIMIT $1 OFFSET $2;
-    `;
+                SELECT u.id, u.login, u.email, u.created_at AS createdAt
+                FROM users u
+                LEFT JOIN account_user_data ad ON u.id = ad.user_id
+                LEFT JOIN email_confirmation ec ON u.id = ec.user_id
+                LEFT JOIN recovery_password_info rpi ON u.id = rpi.user_id
+                LEFT JOIN ban_info bi ON u.id = bi.user_id
+                ${filterConditions}
+                ORDER BY u.${dbSortingColumn} ${sortDirection}
+                LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2};
+            `;
+            
+            // Добавляем числовые limit и skip в параметры
+            queryParams.push(numericLimit, numericSkip);
+    
             // Выполнение запроса на пользователей с пагинацией
-            const users = await queryRunner.query(
-                usersQuery,
-                [limit, skip]
-            );
+            const users = await queryRunner.query(usersQuery, queryParams);
             // Запрос для подсчёта общего количества пользователей (без лимитов)
             const totalCountQuery = `
-      SELECT COUNT(*)
-      FROM users u
-      LEFT JOIN ban_info bi ON u.id = bi.user_id
-      ${filterConditions};
-    `;
-            const totalCountResult = await queryRunner.query(
-                totalCountQuery,
-                []
-            );
+                SELECT COUNT(*)
+                FROM users u
+                LEFT JOIN ban_info bi ON u.id = bi.user_id
+                ${filterConditions};
+            `;
+    
+            // Параметры фильтрации для общего запроса
+            const totalCountResult = await queryRunner.query(totalCountQuery, queryParams.slice(0, -2));
             const totalCount = parseInt(totalCountResult[0].count, 10);
-
+    
             // Вычисление количества страниц
-            const pagesCount = Math.ceil(totalCount / limit);
+            const pagesCount = Math.ceil(totalCount / numericLimit);
+
             // Формирование результата в виде ViewModel
             const result = {
                 pagesCount: pagesCount,
                 page: page,
-                pageSize: limit,
+                pageSize: numericLimit,
                 totalCount: totalCount,
                 items: users.map(user => ({
-                    id: user.id,
+                    id: user.id.toString(),
                     email: user.email,
                     login: user.login,
-                    createdAt: user.created_at
+                    createdAt: user.createdat
                 }))
             };
 
             return result;
-
+    
         } catch (err) {
             throw new Error(`Ошибка при получении списка пользователей: ${err.message}`);
         } finally {
             await queryRunner.release();
         }
-      }
+    }
+
+
       async createUser(newUser: UsersType): Promise<UsersType | null> {
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();

@@ -1,16 +1,14 @@
 
 export class BlogsClass {
     constructor(
-        public id: string, 
+        public id: number, 
         public name: string, 
         public description: string, 
-        public websiteUrl: string, 
-        public createdAt: string, 
-        public isMembership: boolean,
-        public blogOwnerInfo: {
-            userId: string,
-            userLogin: string
-        }
+        public website_url: string, 
+        public created_at: string, 
+        public is_membership: boolean,
+        public owner_user_id: number,
+        public owner_user_login: string
         ) {
     }
 }

@@ -15,10 +15,10 @@ export class BindingBlogSuperAdminCommand {
 export class BindingBlogSuperAdminUseCase {
     constructor (protected blogsSuperAdminRepository: BlogsSuperAdminRepository, public commandBus: CommandBus) {}
 
-    async execute(command: BindingBlogSuperAdminCommand): Promise<boolean> {
-        const user = await this.commandBus.execute(new GetUserByUserIdCommand(command.userId))
-        return this.blogsSuperAdminRepository.BindingBlogToUserById(command.blogId, command.userId, user)
-    }
+    // async execute(command: BindingBlogSuperAdminCommand): Promise<boolean> {
+    //     const user = await this.commandBus.execute(new GetUserByUserIdCommand(command.userId))
+    //     return this.blogsSuperAdminRepository.BindingBlogToUserById(command.blogId, command.userId, user)
+    // }
 }
 
 

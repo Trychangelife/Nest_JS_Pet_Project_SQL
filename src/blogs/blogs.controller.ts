@@ -6,7 +6,7 @@ import { BlogsService } from "./application/blogs.service";
 import { BasicAuthGuard } from "src/guards/basic_auth_guard";
 import { constructorPagination } from "src/utils/pagination.constructor";
 import { PostsType } from "src/posts/dto/PostsType";
-import { BlogsType } from "src/blogs/dto/BlogsType";
+import { BlogsType, BlogsTypeView } from "src/blogs/dto/BlogsType";
 import { PostTypeValidator } from "src/posts/dto/PostTypeValidator";
 import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
@@ -23,11 +23,8 @@ import { CreatePostCommand } from "src/posts/application/use-cases/create_post";
 export class BlogsController {
     
     constructor(
-      //protected blogsService: BlogsService, 
-      //protected postsService: PostsService,
       protected jwtServiceClass: JwtServiceClass,
       private commandBus: CommandBus,
-      //private queryBus: QueryBus, 
     ) {
     }
 
@@ -81,7 +78,7 @@ export class BlogsController {
     @Post()
     async createBlogger(@Body() blogsType: Blogs) {
   
-      const createrPerson: BlogsType | null = await this.commandBus.execute(new CreateBlogCommand(blogsType.name, blogsType.websiteUrl, blogsType.description ));
+      const createrPerson: BlogsTypeView | null = await this.commandBus.execute(new CreateBlogCommand(blogsType.name, blogsType.websiteUrl, blogsType.description ));
       if (createrPerson !== null) {
         return createrPerson
       }
@@ -105,12 +102,11 @@ export class BlogsController {
     @Put(':id')
     async updateBlogger(@Param() params, @Body() blogsType: Blogs) {
       const alreadyChanges: string = await this.commandBus.execute(new UpdateBlogCommand(params.id, blogsType.name, blogsType.websiteUrl, blogsType.description));
-      console.log(params.id, blogsType.name, blogsType.websiteUrl)
-      if (alreadyChanges === 'update') {
+      if (alreadyChanges) {
         throw new HttpException('Update succefully', HttpStatus.NO_CONTENT)
       }
-      else if (alreadyChanges === "404") {
-        throw new HttpException('Blogger NOT FOUND',HttpStatus.NOT_FOUND)
+      else {
+        throw new HttpException('Blog NOT FOUND',HttpStatus.NOT_FOUND)
       }
     }
     @UseGuards(BasicAuthGuard)

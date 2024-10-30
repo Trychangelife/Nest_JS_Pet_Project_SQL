@@ -1,5 +1,5 @@
 import { CommandHandler } from "@nestjs/cqrs"
-import { BlogsRepository } from "src/blogs/repositories/blogs.repository"
+import { BlogsRepositorySql } from "src/blogs/repositories/blogs.sql.repository"
 
 
 
@@ -11,7 +11,7 @@ export class DeleteBlogCommand {
 
 @CommandHandler(DeleteBlogCommand)
 export class DeleteBlogUseCase {
-    constructor (protected bloggerRepository: BlogsRepository ) {}
+    constructor (protected bloggerRepository: BlogsRepositorySql ) {}
 
     async execute(command: DeleteBlogCommand): Promise<string> {
         const result = await this.bloggerRepository.deleteBlogger(command.id)

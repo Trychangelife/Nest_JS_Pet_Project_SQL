@@ -1,5 +1,6 @@
 import { CommandHandler } from "@nestjs/cqrs"
 import { PostRepository } from "src/posts/repositories/posts.repository"
+import { PostsRepositorySql } from "src/posts/repositories/posts.sql.repository"
 
 
 export class UpdatePostCommand {
@@ -15,11 +16,11 @@ export class UpdatePostCommand {
 
 @CommandHandler(UpdatePostCommand)
 export class UpdatePostUseCase {
-    constructor (protected postsRepository: PostRepository ) {}
+    constructor (protected postsRepository: PostsRepositorySql ) {}
 
-    async execute(command: UpdatePostCommand): Promise<string | object> {
+    // async execute(command: UpdatePostCommand): Promise<string | object> {
 
-        return await this.postsRepository.changePost(command.postId, command.title, command.shortDescription, command.content, command.bloggerId)
-    }
+    //     return await this.postsRepository.changePost(command.postId, command.title, command.shortDescription, command.content, command.bloggerId)
+    // }
 }
 

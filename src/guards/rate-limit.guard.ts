@@ -20,7 +20,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
       const ip = request.ip;
       const endpoint = request.originalUrl;
       const method = request.method;
-
+      
       // Уникальный ключ для конкретного IP, метода и эндпоинта
       const cacheKey = `rate-limit-${ip}-${method}-${endpoint}`;
       const currentTime = Date.now();
