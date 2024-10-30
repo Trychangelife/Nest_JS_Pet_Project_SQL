@@ -57,7 +57,7 @@ describe('Auth flow (e2e)', () => {
             expect.objectContaining({
                 id: expect.any(String),
                 login: 'admin',
-                email: 'zkonstantinov1@bk.ru',
+                email: 'test@bk.ru',
                 createdAt: expect.any(String)
             }))
     })
