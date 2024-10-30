@@ -33,6 +33,7 @@ export class FullDataController {
         await this.dataSource.createQueryBuilder().delete().from('email_send_data').execute();
         await this.dataSource.createQueryBuilder().delete().from('registration_data').execute();
         await this.dataSource.createQueryBuilder().delete().from('blog').execute();
+        await this.dataSource.createQueryBuilder().delete().from('posts').execute();
         throw new HttpException("Date is clear",HttpStatus.NO_CONTENT)
         }
 }
