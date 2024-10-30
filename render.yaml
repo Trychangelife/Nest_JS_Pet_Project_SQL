@@ -1,0 +1,35 @@
+# render.yaml
+
+services:
+  - type: web
+    name: nestjs-app
+    env: node
+    region: frankfurt  # Выберите ближайший к вам регион, например, frankfurt для Европы
+    plan: standard
+    buildCommand: yarn && yarn build
+    startCommand: yarn start:prod
+    autoDeploy: true
+
+    # Порты и маршрутизация
+    port: 5000  # Порт, на котором работает ваше приложение (по умолчанию NestJS использует порт 3000)
+
+    # Переменные окружения
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nestjs-db
+          property: connectionString
+
+  - type: postgresql
+    name: nestjs-db
+    plan: standard
+    version: 13
+    region: oregon  # Используйте тот же регион, что и для основного сервиса
+
+databases:
+  - name: nestjs-db
+    plan: standard
+    region: oregon  # Тот же регион, что и у сервиса
+
