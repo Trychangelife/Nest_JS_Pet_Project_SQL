@@ -111,6 +111,7 @@ export class PostController {
     //         throw new HttpException('Post NOT FOUND', HttpStatus.NOT_FOUND)
     //     }
     // }
+
     @UseGuards(JwtAuthGuard)
     @UseFilters(new HttpExceptionFilter())
     @Post(':postId/comments')
@@ -126,28 +127,17 @@ export class PostController {
     }
     @Get(':postId/comments')
     async getCommentsByPostId(@Query() query: { searchNameTerm: string, pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }, @Param() params, @Req() req) {
-        try {
-            const token = req.headers.authorization.split(' ')[1]
-            const userId = await this.jwtServiceClass.getUserByAccessToken(token)
+
+            //const token = req.headers.authorization.split(' ')[1]
+            //const userId = await this.jwtServiceClass.getUserByAccessToken(token)
             const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
-            const newComment = await this.commandBus.execute(new GetCommentByPostIdCommand(params.postId, paginationData.pageNumber, paginationData.pageSize, userId, paginationData.sortBy, paginationData.sortDirection));
+            const newComment = await this.commandBus.execute(new GetCommentByPostIdCommand(params.postId, paginationData.pageNumber, paginationData.pageSize, paginationData.sortBy, paginationData.sortDirection));
             if (newComment) {
                 return newComment
             }
             else {
-                throw new HttpException("Post doesn't exists", HttpStatus.NOT_FOUND)
+                throw new HttpException("Comment doesn't exists", HttpStatus.NOT_FOUND)
             }
-        } catch (error) {
-            const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
-            const userIdMok = 'just'
-            const newComment = await this.commandBus.execute(new GetCommentByPostIdCommand(params.postId, paginationData.pageNumber, paginationData.pageSize, userIdMok, paginationData.sortBy, paginationData.sortDirection));
-            if (newComment) {
-                return newComment
-            }
-            else {
-                throw new HttpException("Post doesn't exists", HttpStatus.NOT_FOUND)
-            }
-        }
     }
 
     @UseGuards(JwtAuthGuard)

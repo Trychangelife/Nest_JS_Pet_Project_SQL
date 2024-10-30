@@ -1,6 +1,6 @@
 import { CommandHandler } from "@nestjs/cqrs"
 import { CommentsRepository } from "src/comments/repositories/comments.repository"
-import { CommentsType } from "src/comments/dto/CommentsType"
+import { CommentsType, CommentsTypeView } from "src/comments/dto/CommentsType"
 
 
 export class GetCommentCommand {
@@ -15,9 +15,9 @@ export class GetCommentCommand {
 export class GetCommentUseCase {
     constructor (protected commentsRepository: CommentsRepository ) {}
 
-    // async execute(command: GetCommentCommand): Promise<CommentsType | null> {
-    //     return await this.commentsRepository.commentsByUserId(command.id, command.userId)
-    // }
+    async execute(command: GetCommentCommand): Promise<CommentsTypeView | null> {
+        return await this.commentsRepository.commentsById(command.id, command.userId)
+    }
 }
 
 

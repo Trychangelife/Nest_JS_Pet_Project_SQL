@@ -1,5 +1,4 @@
 import { CommandHandler } from "@nestjs/cqrs"
-import { PostRepository } from "src/posts/repositories/posts.repository"
 import { PostsRepositorySql } from "src/posts/repositories/posts.sql.repository"
 import { LIKES } from "src/utils/types"
 

@@ -8,7 +8,6 @@ import { MailerModule } from '@nest-modules/mailer';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PostRepository } from './posts/repositories/posts.repository';
 import { PostsRepositorySql } from './posts/repositories/posts.sql.repository';
 import { BlogsController } from './blogs/blogs.controller';
 import { PostController } from './posts/posts.controller';

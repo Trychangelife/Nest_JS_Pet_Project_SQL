@@ -34,6 +34,11 @@ export class FullDataController {
         await this.dataSource.createQueryBuilder().delete().from('registration_data').execute();
         await this.dataSource.createQueryBuilder().delete().from('blog').execute();
         await this.dataSource.createQueryBuilder().delete().from('posts').execute();
+        await this.dataSource.createQueryBuilder().delete().from('posts_like_storage').execute();
+        await this.dataSource.createQueryBuilder().delete().from('posts_dislike_storage').execute();
+        await this.dataSource.createQueryBuilder().delete().from('comments').execute();
+        await this.dataSource.createQueryBuilder().delete().from('comments_like_storage').execute();
+        await this.dataSource.createQueryBuilder().delete().from('comments_dislike_storage').execute();
         throw new HttpException("Date is clear",HttpStatus.NO_CONTENT)
         }
 }

@@ -1,6 +1,5 @@
 import { CommandHandler } from "@nestjs/cqrs"
 import { BlogsRepositorySql } from "src/blogs/repositories/blogs.sql.repository"
-import { PostRepository } from "src/posts/repositories/posts.repository"
 import { PostsRepositorySql } from "src/posts/repositories/posts.sql.repository"
 
 

@@ -4,7 +4,6 @@ import { AuthModule } from "src/auth/auth.module";
 import { BlogsModule } from "src/blogs/blogs.module";
 import { UsersModule } from "src/users/users.module";
 import { PostController } from "./posts.controller";
-import { PostRepository } from "./repositories/posts.repository";
 import { PostsService } from "./application/posts.service";
 import { JwtService } from "@nestjs/jwt";
 import { JwtServiceClass } from "src/guards/jwt.service";
@@ -21,7 +20,7 @@ import { BlogsService } from "src/blogs/application/blogs.service";
     //{name: 'Users', schema: usersSchema}
   ])],
     controllers: [PostController],
-    providers: [PostRepository, PostsService,BlogsService, JwtService, JwtServiceClass
+    providers: [ PostsService,BlogsService, JwtService, JwtServiceClass
     ],
   })
   export class PostsModule {}

@@ -25,13 +25,13 @@ export class CommentsController {
         protected jwtServiceClass: JwtServiceClass,
         private commandBus: CommandBus) {
     }
+
     @Get(':id')
     async getCommentById(@Param() params, @Req() req) {
-    try {
-        const token = req.headers.authorization.split(' ')[1]
-        const userId = await this.jwtServiceClass.getUserByAccessToken(token)
-        const result = await this.commandBus.execute(new GetCommentCommand(params.id, userId));
-        const checkBan = await this.commandBus.execute(new CheckBanStatusSuperAdminCommand(result?.commentatorInfo.userId, null))
+        //const token = req.headers.authorization.split(' ')[1]
+        //const userId = await this.jwtServiceClass.getUserByAccessToken(token)
+        const result = await this.commandBus.execute(new GetCommentCommand(params.id)); // здесь был UserID
+        //const checkBan = await this.commandBus.execute(new CheckBanStatusSuperAdminCommand(result?.commentatorInfo.userId, null))
         //if (result !== null && checkBan !== true && checkBan !== null) {
         if (result !== null) {
             return result
@@ -39,20 +39,22 @@ export class CommentsController {
         else {
             throw new HttpException('Comments NOT FOUND',HttpStatus.NOT_FOUND)
         }
-    } catch (error) {
-        const result: CommentsType | null = await this.commandBus.execute(new GetCommentCommand(params.id))
-        //Восстановить когда потребуется фунционал бана
-        //const checkBan = await this.commandBus.execute(new CheckBanStatusSuperAdminCommand(result?.commentatorInfo.userId, null))
-        //if (result !== null && checkBan !== true && checkBan !== null) {
-        if (result !== null && result !== undefined) {
-            return result
-        }
-        else {
-            throw new HttpException('Comments NOT FOUND',HttpStatus.NOT_FOUND)
-        }
+    // } catch (error) {
+    //     const result: CommentsType | null = await this.commandBus.execute(new GetCommentCommand(params.id))
+    //     //Восстановить когда потребуется фунционал бана
+    //     //const checkBan = await this.commandBus.execute(new CheckBanStatusSuperAdminCommand(result?.commentatorInfo.userId, null))
+    //     //if (result !== null && checkBan !== true && checkBan !== null) {
+    //     if (result !== null && result !== undefined) {
+    //         return result
+    //     }
+    //     else {
+    //         throw new HttpException('Comments NOT FOUND',HttpStatus.NOT_FOUND)
+    //     }
+    //}   
     }
-        
-    }
+
+
+
     @UseGuards(JwtAuthGuard)
     @UseFilters(new HttpExceptionFilter())
     @Put(':commentId')

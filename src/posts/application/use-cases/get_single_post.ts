@@ -1,7 +1,6 @@
 import { Get } from "@nestjs/common"
 import { CommandHandler } from "@nestjs/cqrs"
 import { PostsTypeView } from "src/posts/dto/PostsType"
-import { PostRepository } from "src/posts/repositories/posts.repository"
 import { PostsRepositorySql } from "src/posts/repositories/posts.sql.repository"
 
 

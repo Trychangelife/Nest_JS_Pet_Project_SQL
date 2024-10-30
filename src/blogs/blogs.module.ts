@@ -5,7 +5,6 @@ import { BlogsController } from "./blogs.controller";
 import { BlogsService } from "./application/blogs.service";
 import { JwtService } from "@nestjs/jwt";
 import { JwtServiceClass } from "src/guards/jwt.service";
-import { PostRepository } from "src/posts/repositories/posts.repository";
 import { PostsService } from "src/posts/application/posts.service";
 
 
@@ -17,6 +16,6 @@ import { PostsService } from "src/posts/application/posts.service";
     {name: 'Posts', schema: postSchema}, {name: 'Comments', schema: commentsSchema}, {name: 'Users', schema: usersSchema}, {name: 'RefreshToken', schema: refreshTokenSchema}
   ])],
     controllers: [BlogsController],
-    providers: [ BlogsService, PostsService, PostRepository, JwtServiceClass, JwtService ]
+    providers: [ BlogsService, PostsService, JwtServiceClass, JwtService ]
   })
   export class BlogsModule {}

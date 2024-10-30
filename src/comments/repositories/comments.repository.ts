@@ -1,20 +1,53 @@
 import { Injectable } from "@nestjs/common"
 import { InjectModel } from "@nestjs/mongoose"
 import { Model } from "mongoose"
-import { commentsVievModel } from "src/posts/repositories/posts.repository"
 import { LikesDTO } from "src/utils/class-validator.form"
 import { LIKES } from "src/utils/types"
 import { UsersType } from "src/users/dto/UsersType"
-import { CommentsType } from "src/comments/dto/CommentsType"
+import { CommentsType, CommentsTypeView } from "src/comments/dto/CommentsType"
+import { InjectDataSource } from "@nestjs/typeorm"
+import { DataSource } from "typeorm"
 
 @Injectable()
 export class CommentsRepository {
 
     constructor (
+        @InjectDataSource() protected dataSource: DataSource
     ) {
 
     }
+    async commentsById(commentId: string, userId?: string): Promise<CommentsTypeView | null> {
+        try {
+            const [comment] = await this.dataSource.query(
+                `
+            SELECT * 
+            FROM "comments" WHERE id = $1
+                `, [commentId])
+            if (comment !== null) {
+                const resultView: CommentsTypeView = {
+                    id: comment.id.toString(),
+                    content: comment.content,
+                    commentatorInfo: {
+                        userId: comment.author_user_id,
+                        userLogin: comment.author_login_id
+                    }, 
+                    createdAt: comment.created_at,
+                    likesInfo: {
+                        likesCount: 0,
+                        dislikesCount: 0,
+                        myStatus: LIKES.NONE
+                    }
+                }
+                return resultView
+            }
+            else {
+                return null
+            }
+        } catch (error) {
+            return null
+        }
 
+    }
     // async commentsByUserId(commentId: string, userId?: string): Promise<CommentsType | null> {
     //     const result = await this.commentsModel.findOne({ id: commentId }, commentsVievModel )
     //     const checkOnDislike = (await this.commentsModel.findOne({$and: [{id: commentId}, {"dislikeStorage.userId": userId}]}).lean())
