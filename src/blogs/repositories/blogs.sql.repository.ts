@@ -79,8 +79,8 @@ const getAllBlog = await this.dataSource.query(
         sortBy: string = 'created_at',
         sortDirection: string = 'desc'
         ): Promise<object | null> {
-    // Список разрешённых полей для сортировки и направлений сортировки
-       // Объект для сопоставления значений сортировки с фактическими именами столбцов
+            
+    // Объект для сопоставления значений сортировки с фактическими именами столбцов
        const sortFieldMap = {
         title: 'title',
         created_at: 'created_at',
