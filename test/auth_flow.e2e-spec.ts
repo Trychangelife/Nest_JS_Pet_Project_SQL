@@ -40,7 +40,7 @@ describe('Auth flow (e2e)', () => {
             .send({
                 login: 'admin',
                 password: 'qwerty',
-                email: 'zkonstantinov1@bk.ru'
+                email: 'test@bk.ru'
             })
             .set('Authorization', 'Basic ' + Buffer.from('admin:qwerty').toString('base64')) // Basic auth
             .expect(204);
@@ -92,8 +92,6 @@ describe('Auth flow (e2e)', () => {
     });
 
     it('Производим Logout, отзываем токен', async () => {
-        console.log("Вот что в переменной при Logout:", refreshToken);
-
             const response = await request(app.getHttpServer())
                 .post('/auth/logout')
                 .set('Cookie', refreshToken)
