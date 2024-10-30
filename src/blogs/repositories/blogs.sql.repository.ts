@@ -72,19 +72,27 @@ export class BlogsRepositorySql {
         sortDirection: string = 'desc'
         ): Promise<object | null> {
     // Список разрешённых полей для сортировки и направлений сортировки
-    const allowedSortFields = ['title', 'created_at', 'blog_id'];
+       // Объект для сопоставления значений сортировки с фактическими именами столбцов
+       const sortFieldMap = {
+        title: 'title',
+        created_at: 'created_at',
+        blog_id: 'blog_id',
+        blogName: 'blog_name'  // "blogName" -> "blog_name"
+    };
+
+    // Список допустимых направлений сортировки
     const allowedSortDirections = ['asc', 'desc'];
 
     // Проверка значений sortBy и sortDirection
-    const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'created_at';
+    const sortField = sortFieldMap[sortBy] || 'created_at'; // Получаем фактическое имя столбца
     const order = allowedSortDirections.includes(sortDirection.toLowerCase()) ? sortDirection.toUpperCase() : 'DESC';
 
     if (blogId == undefined) {
         const [totalCountResult] = await this.dataSource.query(`SELECT COUNT(*)::int AS count FROM "posts"`);
         const totalCount = parseInt(totalCountResult.count, 10);
         const pagesCount = Math.ceil(totalCount / limit);
-
-        // Конструируем запрос с интерполяцией для значений сортировки
+        
+        // Используем правильное имя столбца для сортировки
         const getAllPosts = await this.dataSource.query(
             `
             SELECT * 

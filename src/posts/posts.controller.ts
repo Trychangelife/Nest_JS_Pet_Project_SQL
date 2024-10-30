@@ -47,7 +47,7 @@ export class PostController {
     //     }
     // }
     @Get()
-    async getAllPostByBlogId(@Param() params, @Query() query: { pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }) {
+    async getAllPost(@Param() params, @Query() query: { pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }) {
         const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
         const full: object = await this.commandBus.execute(new GetAllPostsSpecificBlogCommand(params.blogId, paginationData.pageNumber, paginationData.pageSize, paginationData.sortBy, paginationData.sortDirection));
         return full
