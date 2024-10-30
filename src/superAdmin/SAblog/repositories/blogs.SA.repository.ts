@@ -1,73 +1,66 @@
 import { Injectable } from "@nestjs/common"
 import { InjectModel } from "@nestjs/mongoose"
+import { InjectDataSource } from "@nestjs/typeorm"
 import { Model } from "mongoose"
 import { BlogsType } from "src/blogs/dto/BlogsType"
 import { UsersType } from "src/users/dto/UsersType"
+import { DataSource } from "typeorm"
 
-const modelViewBloggers = {
-    _id: 0,
-    id: 1,
-    name: 1,
-    description: 1,
-    websiteUrl: 1,
-    createdAt: 1,
-    isMembership: 1,
-    blogOwnerInfo: {
-        userId: 1,
-        userLogin: 1
-    }
-}
 
 @Injectable()
 export class BlogsSuperAdminRepository {
 
     constructor(
-
+        @InjectDataSource() protected dataSource: DataSource
     ) {
         
     }
-
-    // async getAllBlogs(skip: number, limit?: number, searchNameTerm?: string | null, page?: number, sortBy?: string, sortDirection?: string): Promise<object> {
-
-    //     const options = { 
-    //         sort: { [sortBy]: [sortDirection] },
-    //         limit: limit,
-    //         skip: skip, 
-    //     };
-    //     if (page !== undefined && limit !== undefined) {
-    //         const cursor = await this.blogsModel.find({}, modelViewBloggers, options)
-    //         const totalCount = await this.blogsModel.countDocuments({})
-    //         const pagesCount = Math.ceil(totalCount / limit)
-    //         const fullData = await this.blogsModel.find({}, modelViewBloggers)
-
-    //         if (searchNameTerm !== null) {
-    //             const cursorWithRegEx = await this.blogsModel.find({ name: { $regex: searchNameTerm, $options: 'i' } }, modelViewBloggers, options)
-    //             const totalCountWithRegex = cursorWithRegEx.length
-    //             const pagesCountWithRegex = Math.ceil(totalCountWithRegex / limit)
-    //             return { pagesCount: pagesCountWithRegex, page: page, pageSize: limit, totalCount: totalCountWithRegex, items: cursorWithRegEx }
-    //         }
-    //         // if (banStatus === "banned") {
-    //         //     const cursorWithRegEx = await this.blogsModel.find({ "banInfo.isBanned": true }, modelViewBloggers, options)
-    //         //     const totalCountWithRegex = cursorWithRegEx.length
-    //         //     const pagesCountWithRegex = Math.ceil(totalCountWithRegex / limit)
-    //         //     return { pagesCount: pagesCountWithRegex, page: page, pageSize: limit, totalCount: totalCountWithRegex, items: cursorWithRegEx }
-    //         // }
-    //         // if (banStatus === "notBanned") {
-    //         //     const cursorWithRegEx = await this.blogsModel.find({ "banInfo.isBanned": false }, modelViewBloggers, options)
-    //         //     const totalCountWithRegex = cursorWithRegEx.length
-    //         //     const pagesCountWithRegex = Math.ceil(totalCountWithRegex / limit)
-    //         //     return { pagesCount: pagesCountWithRegex, page: page, pageSize: limit, totalCount: totalCountWithRegex, items: cursorWithRegEx }
-    //         // }
-    //         if (skip > 0 || limit > 0) {
-    //             return { pagesCount, page: page, pageSize: limit, totalCount, items: cursor }
-    //         }
-    //         else return { pagesCount: 0, page: page, pageSize: limit, totalCount, items: fullData }
-    //     }
-    //     else {
-    //         return await this.blogsModel.find({}, modelViewBloggers)
-    //     }
-
-    // }
+    async getAllBlogs(
+        skip: number, 
+        limit: number = 10, 
+        searchNameTerm?: string | null, 
+        pageNumber: number = 1, 
+        sortBy: string = 'created_at', 
+        sortDirection: string = 'desc'
+    ): Promise<object> {
+    
+        // Базовый SQL-запрос и дополнительные параметры
+        const searchCondition = searchNameTerm ? `WHERE name ILIKE $1` : '';
+        const queryParams = searchNameTerm ? [`%${searchNameTerm}%`, limit, skip] : [limit, skip];
+    
+        // Запрос для общего количества блогов
+        const [totalCountResult] = await this.dataSource.query(`SELECT COUNT(*)::int AS count FROM "blog"`);
+        const totalCount = parseInt(totalCountResult.count, 10);
+        const pagesCount = Math.ceil(totalCount / limit);
+    
+        // Основной SQL-запрос для получения блогов с учетом параметров
+        const getAllBlog = await this.dataSource.query(
+            `
+            SELECT * 
+            FROM "blog"
+            ${searchCondition}
+            ORDER BY ${sortBy} ${sortDirection}
+            LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}
+            `,
+            queryParams
+        );
+    
+        // Возвращаем форматированный объект
+        return {
+            pagesCount,
+            page: pageNumber,
+            pageSize: limit,
+            totalCount,
+            items: getAllBlog.map(blog => ({
+                id: blog.id.toString(),
+                name: blog.name,
+                description: blog.description,
+                websiteUrl: blog.website_url,
+                createdAt: blog.created_at,
+                isMembership: blog.is_membership,
+            }))
+        };
+    }
     // async targetBloggers(id: string): Promise<object | undefined> {
     //     const blogger: BlogsType | null = await this.blogsModel.findOne({ id: id }, modelViewBloggers).lean()
     //     if (blogger !== null) {

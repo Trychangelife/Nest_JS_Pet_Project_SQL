@@ -13,7 +13,7 @@ import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { CreateBlogByBloggerCommand } from "./application/use-cases/create_blog";
 import { Blogs } from "src/blogs/dto/Blog_validator_type";
-import { GetAllPostsSpecificBlogCommand } from "src/posts/application/use-cases/get_all_posts_specific_blog";
+import { GetAllPostsSpecificBlogCommand } from "src/superAdmin/SAblog/application/use-cases/get_all_posts_specific_blog";
 import { CreatePostCommand } from "src/posts/application/use-cases/create_post";
 import { JwtAuthGuard } from "src/guards/jwt-auth.guard";
 import { GetUserByUserIdCommand } from "src/users/application/use-cases/Get_user_by_id";

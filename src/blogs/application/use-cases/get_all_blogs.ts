@@ -10,14 +10,14 @@ export class GetAllBlogsCommand {
 
 @CommandHandler(GetAllBlogsCommand)
 export class GetAllBlogsUseCase {
-    constructor (protected bloggerRepository: BlogsRepositorySql ) {}
+    constructor (protected blogsRepository: BlogsRepositorySql ) {}
 
     async execute(command: GetAllBlogsCommand): Promise<object> {
         let skip = 0
         if (command.pageNumber && command.pageSize) {
             skip = (command.pageNumber - 1) * command.pageSize
         }
-        const blogs = await this.bloggerRepository.allBlogs(skip, command.pageSize, command.searchNameTerm, command.pageNumber, command.sortBy, command.sortDirection)
+        const blogs = await this.blogsRepository.getAllBlogs(skip, command.pageSize, command.searchNameTerm, command.pageNumber, command.sortBy, command.sortDirection)
         return blogs
     }
 }

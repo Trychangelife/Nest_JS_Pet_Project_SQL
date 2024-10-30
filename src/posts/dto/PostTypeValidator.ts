@@ -8,7 +8,7 @@ export class PostTypeValidator {
     id: string;
     @Length(1,30)
     @Transform(({ value }: TransformFnParams) => value?.trim())
-    @Matches(nameRegex)
+    //@Matches(nameRegex)
     title: string;
     @Transform(({ value }: TransformFnParams) => value?.trim())
     @Length(1,100)

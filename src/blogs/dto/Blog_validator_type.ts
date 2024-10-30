@@ -6,7 +6,7 @@ export const nameRegex = /^[a-zA-Zа-яА-Я\s-]+$/;
 
 export class Blogs {
     @Transform(({ value }: TransformFnParams) => value?.trim())
-    @Matches(nameRegex)
+    //@Matches(nameRegex)
     @Length(1, 15)
     name: string;
 

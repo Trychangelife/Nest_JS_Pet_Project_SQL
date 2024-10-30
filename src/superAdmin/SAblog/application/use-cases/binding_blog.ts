@@ -1,5 +1,5 @@
 import { CommandBus, CommandHandler } from "@nestjs/cqrs"
-import { BlogsSuperAdminRepository } from "../repositories/blogs.SA.repository"
+import { BlogsSuperAdminRepository } from "../../repositories/blogs.SA.repository"
 import { GetUserByUserIdCommand } from "src/users/application/use-cases/Get_user_by_id"
 
 

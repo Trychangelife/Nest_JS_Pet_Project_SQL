@@ -12,112 +12,73 @@ import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { GetAllBlogsCommand } from "./application/use-cases/get_all_blogs";
 import { GetTargetBlogCommand } from "./application/use-cases/get_target_blog";
-import { CreateBlogCommand } from "./application/use-cases/create_blog";
-import { UpdateBlogCommand } from "./application/use-cases/update_blog";
-import { DeleteBlogCommand } from "./application/use-cases/delete_single_blog";
+import { CreateBlogCommand } from "../superAdmin/SAblog/application/use-cases/create_blog";
+import { UpdateBlogCommand } from "../superAdmin/SAblog/application/use-cases/update_blog";
+import { DeleteBlogCommand } from "../superAdmin/SAblog/application/use-cases/delete_single_blog";
 import { Blogs } from "src/blogs/dto/Blog_validator_type";
-import { GetAllPostsSpecificBlogCommand } from "src/posts/application/use-cases/get_all_posts_specific_blog";
+import { GetAllPostsSpecificBlogCommand } from "src/superAdmin/SAblog/application/use-cases/get_all_posts_specific_blog";
 import { CreatePostCommand } from "src/posts/application/use-cases/create_post";
 
 @Controller('blogs')
 export class BlogsController {
-    
-    constructor(
-      protected jwtServiceClass: JwtServiceClass,
-      private commandBus: CommandBus,
-    ) {
-    }
 
-    @Get()
-    async getAllBloggers(@Query() query: {searchNameTerm: string, pageNumber: string, pageSize: string, sortBy: string, sortDirection: string}) {
-      const searchNameTerm = typeof query.searchNameTerm === 'string' ? query.searchNameTerm : null;
-      const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
-      const full: object = await this.commandBus.execute(new GetAllBlogsCommand(paginationData.pageSize, paginationData.pageNumber, searchNameTerm, paginationData.sortBy, paginationData.sortDirection));
-      return full
-    }
+  constructor(
+    protected jwtServiceClass: JwtServiceClass,
+    private commandBus: CommandBus,
+  ) {
+  }
 
-    @Get(':id')
-    async getBloggerById(@Param('id') id: string) {
-      const findBlogger: object | undefined = await this.commandBus.execute(new GetTargetBlogCommand(id))
-        if (findBlogger !== undefined) {
-            return findBlogger
-        }
-        else {
-            throw new HttpException('Blog not found',HttpStatus.NOT_FOUND)
-        }
-    }
+  @Get()
+  async getAllBloggers(@Query() query: { searchNameTerm: string, pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }) {
+    const searchNameTerm = typeof query.searchNameTerm === 'string' ? query.searchNameTerm : null;
+    const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
+    const full: object = await this.commandBus.execute(new GetAllBlogsCommand(paginationData.pageSize, paginationData.pageNumber, searchNameTerm, paginationData.sortBy, paginationData.sortDirection));
+    return full
+  }
 
-    @Get(':bloggerId/posts')
-    async getPostByBloggerID(@Query() query: {SearchNameTerm: string, PageNumber: string, PageSize: string, sortBy: string, sortDirection: string}, @Param() params, @Req() req) {
-      try {
-        const token = req.headers.authorization.split(' ')[1]
-        const userId = await this.jwtServiceClass.getUserByAccessToken(token)
-        const paginationData = constructorPagination(query.PageSize as string, query.PageNumber as string, query.sortBy as string, query.sortDirection as string);
-        const findBlogger: object | undefined = await this.commandBus.execute(new GetAllPostsSpecificBlogCommand(params.bloggerId, paginationData.pageNumber, paginationData.pageSize, userId));
-       if (findBlogger !== undefined) {
-        return findBlogger
-      }
-        else {
-        throw new HttpException('Post NOT FOUND',HttpStatus.NOT_FOUND)
-      }
-      } catch (error) {
-        const paginationData = constructorPagination(query.PageSize as string, query.PageNumber as string, query.sortBy as string, query.sortDirection as string);
-      const findBlogger: object | undefined = await this.commandBus.execute(new GetAllPostsSpecificBlogCommand(params.bloggerId, paginationData.pageNumber, paginationData.pageSize));
-      
-      if (findBlogger !== undefined) {
-        return findBlogger
-      }
-      else {
-        throw new HttpException('Post NOT FOUND',HttpStatus.NOT_FOUND)
-      }
-      }
-      
+  @Get(':id')
+  async getBloggerById(@Param('id') id: string) {
+    const findBlogger: object | undefined = await this.commandBus.execute(new GetTargetBlogCommand(id))
+    if (findBlogger) {
+      return findBlogger
     }
-    @UseGuards(BasicAuthGuard)
-    @UseFilters(new HttpExceptionFilter())
-    @Post()
-    async createBlogger(@Body() blogsType: Blogs) {
-  
-      const createrPerson: BlogsTypeView | null = await this.commandBus.execute(new CreateBlogCommand(blogsType.name, blogsType.websiteUrl, blogsType.description ));
-      if (createrPerson !== null) {
-        return createrPerson
-      }
-      else { 
-        throw new HttpException('Opps check input Data',HttpStatus.BAD_REQUEST)
-      }
-    }
-    @UseGuards(BasicAuthGuard)
-    @UseFilters(new HttpExceptionFilter())
-    @Post(':id/posts')
-    async createPostByBloggerId(@Param() params, @Body() post: PostTypeValidator) {
-      const blogger = await this.commandBus.execute(new GetTargetBlogCommand(params.id))
-      if (blogger == undefined || blogger == null) { throw new HttpException('Blogger NOT FOUND',HttpStatus.NOT_FOUND) }
-  
-      const createPostForSpecificBlogger: string | object | null = await this.commandBus.execute(new CreatePostCommand(post.title, post.content, post.shortDescription, post.blogId, params.id));
-      return createPostForSpecificBlogger;
-  
-    }
-    @UseGuards(BasicAuthGuard)
-    @UseFilters(new HttpExceptionFilter())
-    @Put(':id')
-    async updateBlogger(@Param() params, @Body() blogsType: Blogs) {
-      const alreadyChanges: string = await this.commandBus.execute(new UpdateBlogCommand(params.id, blogsType.name, blogsType.websiteUrl, blogsType.description));
-      if (alreadyChanges) {
-        throw new HttpException('Update succefully', HttpStatus.NO_CONTENT)
-      }
-      else {
-        throw new HttpException('Blog NOT FOUND',HttpStatus.NOT_FOUND)
-      }
-    }
-    @UseGuards(BasicAuthGuard)
-    @Delete(':id')
-    async deleteOneBlogger(@Param() params) {
-      const afterDelete = await this.commandBus.execute(new DeleteBlogCommand(params.id));
-      if (afterDelete === "204") {
-        throw new HttpException('Delete succefully',HttpStatus.NO_CONTENT)
-      }
-      else {
-        throw new HttpException('Blogger NOT FOUND',HttpStatus.NOT_FOUND)
-      }
+    else {
+      throw new HttpException('Blog not found', HttpStatus.NOT_FOUND)
     }
   }
+
+  // Return posts for blog with paging and sorting
+  @Get(':blogId/posts')
+  async getAllPostByBlogId(@Param() params, @Query() query: { pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }) {
+    const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
+    const full: object = await this.commandBus.execute(new GetAllPostsSpecificBlogCommand(params.blogId, paginationData.pageNumber, paginationData.pageSize, paginationData.sortBy, paginationData.sortDirection));
+    return full
+  }
+
+  // @Get(':blogId/posts')
+  // async getPostByBloggerID(@Query() query: {SearchNameTerm: string, PageNumber: string, PageSize: string, sortBy: string, sortDirection: string}, @Param() params, @Req() req) {
+  //   try {
+  //     const token = req.headers.authorization.split(' ')[1]
+  //     const userId = await this.jwtServiceClass.getUserByAccessToken(token)
+  //     const paginationData = constructorPagination(query.PageSize as string, query.PageNumber as string, query.sortBy as string, query.sortDirection as string);
+  //     const findBlogger: object | undefined = await this.commandBus.execute(new GetAllPostsSpecificBlogCommand(params.blogId, paginationData.pageNumber, paginationData.pageSize, userId));
+  //    if (findBlogger !== undefined) {
+  //     return findBlogger
+  //   }
+  //     else {
+  //     throw new HttpException('Post NOT FOUND',HttpStatus.NOT_FOUND)
+  //   }
+  //   } catch (error) {
+  //     const paginationData = constructorPagination(query.PageSize as string, query.PageNumber as string, query.sortBy as string, query.sortDirection as string);
+  //   const findBlogger: object | undefined = await this.commandBus.execute(new GetAllPostsSpecificBlogCommand(params.bloggerId, paginationData.pageNumber, paginationData.pageSize));
+
+  //   if (findBlogger !== undefined) {
+  //     return findBlogger
+  //   }
+  //   else {
+  //     throw new HttpException('Post NOT FOUND',HttpStatus.NOT_FOUND)
+  //   }
+  //   }
+
+  // }
+}

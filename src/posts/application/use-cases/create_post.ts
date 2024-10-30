@@ -2,7 +2,8 @@ import { CommandHandler } from "@nestjs/cqrs"
 import { InjectModel } from "@nestjs/mongoose"
 import { InjectDataSource } from "@nestjs/typeorm"
 import { Model } from "mongoose"
-import { BlogsType } from "src/blogs/dto/BlogsType"
+import { BlogsType, BlogsTypeView } from "src/blogs/dto/BlogsType"
+import { BlogsRepositorySql } from "src/blogs/repositories/blogs.sql.repository"
 import { PostClass } from "src/posts/dto/PostClass"
 import { PostRepository } from "src/posts/repositories/posts.repository"
 import { PostsRepositorySql } from "src/posts/repositories/posts.sql.repository"
@@ -27,37 +28,18 @@ export class CreatePostCommand {
 export class CreatePostUseCase {
     constructor (
         protected postsRepository: PostsRepositorySql,
-        @InjectDataSource() protected dataSource: DataSource ) {}
+        protected blogRepository: BlogsRepositorySql,
+        ) {}
 
-    // async execute(command: CreatePostCommand): Promise<object | string | null> {
-    //     //FOR SQL DATABASE
-    //     if (process.env.USE_DATABASE === "SQL") {
-    //         const foundBlogger = await this.dataSource.query(`SELECT * FROM "Bloggers" WHERE id = $1`, [command.blogId])
-    //     if (foundBlogger.length >= 1 && command.blogId) {
-    //         // CREATE ON CLASS
-    //         const newPost = new PostClass(uuidv4(), command.title, command.content, command.shortDescription, command.blogId, foundBlogger[0].name, (new Date()).toISOString(),foundBlogger.blogOwnerInfo.userId, {likesCount: 0, dislikesCount: 0, myStatus: LIKES.NONE})
-    //         return await this.postsRepository.releasePost(newPost, command.blogId, command.blogIdUrl)
-    //     }
-    //     else { return null }
-    //     }
-    //     // FOR MONGO DATABASE
-    //     else {
-    //     const foundBlogger = await this.bloggerModel.findOne({ id: command.blogId }).lean()
-    //     const foundBloggerW = await this.bloggerModel.findOne({ id: command.blogIdUrl }).lean()
-    //     if (command.blogIdUrl && foundBloggerW !== null) {
-    //         // Построено на классе
-    //         const newPost = new PostClass(uuidv4(), command.title, command.content, command.shortDescription, command.blogIdUrl, foundBloggerW.name, (new Date()).toISOString(), foundBlogger.owner_user_id,{likesCount: 0, dislikesCount: 0, myStatus: LIKES.NONE})
-        
-    //         return await this.postsRepository.releasePost(newPost, command.blogIdUrl)
-    //     }
-    //     else if (foundBlogger !== null && command.blogId) {
-    //         // Построено на классе
-    //         const newPost = new PostClass(uuidv4(), command.title, command.content, command.shortDescription, command.blogId, foundBlogger.name,(new Date()).toISOString(), foundBlogger.owner_user_id, {likesCount: 0, dislikesCount: 0, myStatus: LIKES.NONE})
-    
-    //         return await this.postsRepository.releasePost(newPost, command.blogId, command.blogIdUrl)
-    //     }
-    //     else { return null }
-    // }
-    // }
+    async execute(command: CreatePostCommand): Promise<object | string | null> {
+        // Кладем в второй параметр TRUE т.к это внутренний запрос, ожидаем полное тело из БД
+            const foundBlog: BlogsType = await this.blogRepository.targetBlogAdmin(command.blogId, command?.userId)
+        if (foundBlog && command.blogId) {
+            // CREATE ON CLASS
+            const newPost = new PostClass(uuidv4(), command.title, command.content, command.shortDescription, command.blogId, foundBlog.name, (new Date()).toISOString(),foundBlog.owner_user_id, {likesCount: 0, dislikesCount: 0, myStatus: LIKES.NONE})
+            return await this.postsRepository.releasePost(newPost, foundBlog)
+        }
+        else { return null }       
+    }
 }
 

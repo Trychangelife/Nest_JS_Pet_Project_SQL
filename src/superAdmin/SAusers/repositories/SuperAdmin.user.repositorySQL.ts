@@ -29,7 +29,6 @@ export class SuperAdminUsersRepositorySql {
         banStatus: BanStatus
     ): Promise<object> {
         const queryRunner = this.dataSource.createQueryRunner();
-        console.log(sortDirection)
         try {
             await queryRunner.connect();
     

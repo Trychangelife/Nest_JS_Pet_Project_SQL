@@ -5,7 +5,9 @@ import { PostsRepositorySql } from "src/posts/repositories/posts.sql.repository"
 
 export class DeletePostCommand {
     constructor(
-        public deleteId: string) {
+        public deletePostId: string,
+        public blogId: string
+        ) {
         
     }
 }
@@ -14,9 +16,9 @@ export class DeletePostCommand {
 export class DeletePostUseCase {
     constructor (protected postsRepository: PostsRepositorySql ) {}
 
-    // async execute(command: DeletePostCommand): Promise<boolean> {
-    //         return await this.postsRepository.deletePost(command.deleteId)
+    async execute(command: DeletePostCommand): Promise<boolean> {
+            return await this.postsRepository.deletePost(command.deletePostId, command.blogId)
     
-    //     }
+        }
 }
 

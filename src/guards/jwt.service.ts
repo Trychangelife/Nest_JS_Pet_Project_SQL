@@ -19,7 +19,7 @@ export class JwtServiceClass {
     async accessToken(user: UsersType) {
         return this.jwtService.sign(
             { id: user.id }, 
-            { secret: process.env.JWT_SECRET, expiresIn: '10s' }
+            { secret: process.env.JWT_SECRET, expiresIn: '10m' }
         );
     }
     
@@ -30,7 +30,7 @@ export class JwtServiceClass {
       const deviceId = uuid();
       const refreshToken = this.jwtService.sign(
           { id: user.id, deviceId: deviceId },
-          { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20s' }
+          { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20m' }
       );
 
       const newRefreshTokenForStorage: RefreshTokenStorageType = {
@@ -64,7 +64,7 @@ export class JwtServiceClass {
             const deviceId = checkDeviceId.device_id;
             const refreshToken = this.jwtService.sign(
                 { id: user.id, deviceId: deviceId },
-                { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20s' }
+                { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20m' }
             );
 
             await this.dataSource.query(`

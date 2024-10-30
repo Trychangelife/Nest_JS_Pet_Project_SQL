@@ -20,6 +20,7 @@ import { LikeDislikeForPostCommand } from "./application/use-cases/like_dislike_
 import { CheckBanStatusSuperAdminCommand } from "src/superAdmin/SAusers/application/useCases/check_banStatus";
 import { PostsType } from "./dto/PostsType";
 import { CheckForbiddenCommand } from "./application/use-cases/check_forbidden";
+import { GetAllPostsSpecificBlogCommand } from "src/superAdmin/SAblog/application/use-cases/get_all_posts_specific_blog";
 
 @Controller('posts')
 export class PostController {
@@ -31,29 +32,35 @@ export class PostController {
     ) {
     }
     // TASK - Pagination doesn't work, need to be fixed
+    // @Get()
+    // async getAllPosts(@Query() query: { searchNameTerm: string, pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }, @Req() req) {
+    //     try {
+    //         const token = req.headers.authorization.split(' ')[1]
+    //         const userId = await this.jwtServiceClass.getUserByAccessToken(token)
+    //         const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
+    //         const getAllPosts: object = await this.commandBus.execute(new GetAllPostsCommand(paginationData.pageSize, paginationData.pageNumber, userId));
+    //         return getAllPosts;
+    //     } catch (error) {
+    //         const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
+    //         const getAllPosts: object = await this.commandBus.execute(new GetAllPostsCommand(paginationData.pageSize, paginationData.pageNumber));
+    //         return getAllPosts;
+    //     }
+    // }
     @Get()
-    async getAllPosts(@Query() query: { searchNameTerm: string, pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }, @Req() req) {
-        try {
-            const token = req.headers.authorization.split(' ')[1]
-            const userId = await this.jwtServiceClass.getUserByAccessToken(token)
-            const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
-            const getAllPosts: object = await this.commandBus.execute(new GetAllPostsCommand(paginationData.pageSize, paginationData.pageNumber, userId));
-            return getAllPosts;
-        } catch (error) {
-            const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
-            const getAllPosts: object = await this.commandBus.execute(new GetAllPostsCommand(paginationData.pageSize, paginationData.pageNumber));
-            return getAllPosts;
-        }
+    async getAllPostByBlogId(@Param() params, @Query() query: { pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }) {
+        const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
+        const full: object = await this.commandBus.execute(new GetAllPostsSpecificBlogCommand(params.blogId, paginationData.pageNumber, paginationData.pageSize, paginationData.sortBy, paginationData.sortDirection));
+        return full
     }
-
+    
     @Get(':id')
     async getPostByID(@Param() params, @Req() req) {
         try {
-            const token = req.headers.authorization.split(' ')[1]
-            const userId = await this.jwtServiceClass.getUserByAccessToken(token)
-            const takePost: PostsType | undefined = await this.commandBus.execute(new GetSinglePostCommand(params.id, userId))
-            const checkBan = await this.commandBus.execute(new CheckBanStatusSuperAdminCommand(null, takePost?.blogId))
-            if (takePost !== undefined) { 
+            //const token = req.headers.authorization.split(' ')[1]
+            //const userId = await this.jwtServiceClass.getUserByAccessToken(token)
+            const takePost: PostsType | null = await this.commandBus.execute(new GetSinglePostCommand(params.id)) // Тут еще был userId из токена
+            //const checkBan = await this.commandBus.execute(new CheckBanStatusSuperAdminCommand(null, takePost?.blogId))
+            if (takePost !== null) { 
             //if (takePost !== undefined && checkBan !== true && checkBan !== null) { - раскомментирую когда дойду до банов
                 return takePost
             }
@@ -62,7 +69,7 @@ export class PostController {
             }
         } catch (error) {
             const takePost: PostsType | undefined = await this.commandBus.execute(new GetSinglePostCommand(params.id))
-            const checkBan = await this.commandBus.execute(new CheckBanStatusSuperAdminCommand(null, takePost?.blogId))
+            //const checkBan = await this.commandBus.execute(new CheckBanStatusSuperAdminCommand(null, takePost?.blogId))
             if (takePost !== undefined) {
             //if (takePost !== undefined && checkBan !== true && checkBan !== null) {
                 
@@ -106,18 +113,18 @@ export class PostController {
         }
 
     }
-    @UseGuards(BasicAuthGuard)
-    @Delete(':id')
-    async deletePostById(@Param() params, @Res() res) {
-        const deleteObj: boolean = await this.commandBus.execute(new DeletePostCommand(params.id));
-        if (deleteObj === true) {
-            //return HttpStatus.NO_CONTENT
-            throw new HttpException('Post was DELETED', HttpStatus.NO_CONTENT)
-        }
-        else {
-            throw new HttpException('Post NOT FOUND', HttpStatus.NOT_FOUND)
-        }
-    }
+    // @UseGuards(BasicAuthGuard)
+    // @Delete(':id')
+    // async deletePostById(@Param() params, @Res() res) {
+    //     const deleteObj: boolean = await this.commandBus.execute(new DeletePostCommand(params.id));
+    //     if (deleteObj === true) {
+    //         //return HttpStatus.NO_CONTENT
+    //         throw new HttpException('Post was DELETED', HttpStatus.NO_CONTENT)
+    //     }
+    //     else {
+    //         throw new HttpException('Post NOT FOUND', HttpStatus.NOT_FOUND)
+    //     }
+    // }
     @UseGuards(JwtAuthGuard)
     @UseFilters(new HttpExceptionFilter())
     @Post(':postId/comments')
