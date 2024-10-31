@@ -18,7 +18,7 @@ export class GetSinglePostUseCase {
     constructor (protected postsRepository: PostsRepositorySql ) {}
 
     async execute(command: GetSinglePostCommand): Promise<PostsTypeView | null> {
-        return await this.postsRepository.targetPost(command.postId, command.userId)
+        return await this.postsRepository.targetPost(command.postId)
     }
 }
 

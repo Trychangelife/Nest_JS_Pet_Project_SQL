@@ -9,7 +9,7 @@ import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
 import { Comment } from "src/comments/dto/Comment_validator_type";
 import { PostTypeValidatorForCreate } from "src/posts/dto/PostTypeValidator";
 import { CommandBus } from "@nestjs/cqrs";
-import { GetAllPostsCommand } from "./application/use-cases/get_all_posts";
+import { GetAllPostsCommand, GetAllPostsUseCase } from "./application/use-cases/get_all_posts";
 import { GetSinglePostCommand } from "./application/use-cases/get_single_post";
 import { CreatePostCommand } from "./application/use-cases/create_post";
 import { UpdatePostCommand } from "./application/use-cases/update_post";
@@ -47,9 +47,9 @@ export class PostController {
     //     }
     // }
     @Get()
-    async getAllPost(@Param() params, @Query() query: { pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }) {
+    async getAllPost(@Query() query: { pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }) {
         const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
-        const full: object = await this.commandBus.execute(new GetAllPostsSpecificBlogCommand(params.blogId, paginationData.pageNumber, paginationData.pageSize, paginationData.sortBy, paginationData.sortDirection));
+        const full: object = await this.commandBus.execute(new GetAllPostsCommand( paginationData.pageSize, paginationData.pageNumber,  paginationData.sortBy, paginationData.sortDirection));
         return full
     }
     

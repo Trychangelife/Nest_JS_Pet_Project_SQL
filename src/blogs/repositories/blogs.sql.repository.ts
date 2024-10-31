@@ -71,140 +71,108 @@ const getAllBlog = await this.dataSource.query(
 //---------------------------------------------------------------------------
 
 
-    async allPostsSpecificBlogger(
-        blogId: string, 
-        offset: number = 0, 
-        limit: number = 10, 
-        pageNumber: number = 1, 
-        sortBy: string = 'created_at',
-        sortDirection: string = 'desc'
-        ): Promise<object | null> {
-            
+async allPostsSpecificBlogger(
+    blogId: string, 
+    offset: number = 0, 
+    limit: number = 10, 
+    pageNumber: number = 1, 
+    sortBy: string = 'created_at',
+    sortDirection: string = 'desc'
+): Promise<object | null> {
     // Объект для сопоставления значений сортировки с фактическими именами столбцов
-       const sortFieldMap = {
+    const sortFieldMap = {
         title: 'title',
         created_at: 'created_at',
         blog_id: 'blog_id',
-        blogName: 'blog_name'  // "blogName" -> "blog_name"
+        blogName: 'blog_name'
     };
 
     // Список допустимых направлений сортировки
     const allowedSortDirections = ['asc', 'desc'];
 
     // Проверка значений sortBy и sortDirection
-    const sortField = sortFieldMap[sortBy] || 'created_at'; // Получаем фактическое имя столбца
+    const sortField = sortFieldMap[sortBy] || 'created_at';
     const order = allowedSortDirections.includes(sortDirection.toLowerCase()) ? sortDirection.toUpperCase() : 'DESC';
 
-    if (blogId == undefined) {
-        const [totalCountResult] = await this.dataSource.query(`SELECT COUNT(*)::int AS count FROM "posts"`);
-        const totalCount = parseInt(totalCountResult.count, 10);
-        const pagesCount = Math.ceil(totalCount / limit);
-        
-        // Используем правильное имя столбца для сортировки
-        const getAllPosts = await this.dataSource.query(
-            `
-            SELECT * 
-            FROM "posts"
-            ORDER BY ${sortField} ${order}
-            LIMIT $1 OFFSET $2
-            `,
-            [limit, offset]
-        );
-        // Возвращаем форматированный объект
-        return {
-            pagesCount,
-            page: pageNumber,
-            pageSize: limit,
-            totalCount,
-            items: getAllPosts.map(post => ({
-                id: post.id.toString(),
-                title: post.title,
-                shortDescription: post.short_description,
-                content: post.content,
-                blogId: post.blog_id.toString(),
-                blogName: post.blog_name,
-                createdAt: post.created_at,
-                extendedLikesInfo:{
-                    likesCount: 0,
-                    dislikesCount: 0,
-                    myStatus: LIKES.NONE,
-                    newestLikes: []
-                },
-            }))
-        };   
-        }
-        // РАСШИРЕННЫЙ МЕТОД С УЧАСТИЕМ BLOG ID 
-        const [totalCountResult] = await this.dataSource.query(`SELECT COUNT(*)::int AS count FROM "posts" WHERE blog_id = $1`, [blogId]);
-        const totalCount = parseInt(totalCountResult.count, 10);
-        const pagesCount = Math.ceil(totalCount / limit);
-        const queryParams =  [limit, offset, blogId];
-        const checkBloggerExist = await this.dataSource.query(`SELECT COUNT(*)::int as count FROM "blog" WHERE id = $1 `,[blogId])
-        if (checkBloggerExist < 1) { return null }
-
-            const getAllPosts = await this.dataSource.query(
-                `
-                SELECT * 
-                FROM "posts"
-                WHERE blog_id = $${queryParams.length}
-                ORDER BY ${sortBy} ${sortDirection}
-                LIMIT $${queryParams.length - 2} OFFSET $${queryParams.length - 1}
-                `,
-                queryParams
-            );
-                console.log(queryParams)
-            // Возвращаем форматированный объект
-            return {
-                pagesCount,
-                page: pageNumber,
-                pageSize: limit,
-                totalCount,
-                items: getAllPosts.map(post => ({
-                    id: post.id.toString(),
-                    title: post.title,
-                    shortDescription: post.short_description,
-                    content: post.content,
-                    blogId: post.blog_id.toString(),
-                    blogName: post.blog_name,
-                    createdAt: post.created_at,
-                    extendedLikesInfo:{
-                        likesCount: 0,
-                        dislikesCount: 0,
-                        myStatus: LIKES.NONE,
-                        newestLikes: []
-                    },
-                }))
-            };   
-        //     const targetPostWithAggregation = await this.postsModel.aggregate([{
-        //     $project: {_id: 0 ,id: 1, title: 1, shortDescription: 1, content: 1, bloggerId: 1, bloggerName: 1, addedAt: 1, extendedLikesInfo: {likesCount: 1, dislikesCount: 1, myStatus: 1, newestLikes: {addedAt: 1, userId: 1, login: 1}}}}
-        // ]).match({bloggerId: bloggerId})
-        // for (let index = 0; index < targetPostWithAggregation.length; index++) {
-        //     let post = {...targetPostWithAggregation[index], extendedLikesInfo: {...targetPostWithAggregation[index].extendedLikesInfo, newestLikes: targetPostWithAggregation[index].extendedLikesInfo.newestLikes.reverse().slice(0,3)
-        //     }};
-        //     const checkOnDislike = await this.postsModel.findOne({$and: [{id: post.id}, {"dislikeStorage.userId": userId}]}).lean()
-        //     const checkOnLike = await this.postsModel.findOne({$and: [{id: post.id}, {"extendedLikesInfo.newestLikes.userId": userId}]}).lean()
-        //     let myStatus = ''
-        //      if (checkOnLike) {
-        //     myStatus = "Like"
-        // }
-        //         else if (checkOnDislike) {
-        //     myStatus = "Dislike"
-        // }
-        //         else {
-        //     myStatus = "None"
-        // }
-        //     post.extendedLikesInfo.myStatus = myStatus
-        //     arrayForReturn.push(post)
-        // }
-        //     if (page > 0 || pageSize > 0) {
-        //         return { pagesCount, page: page, pageSize: pageSize, totalCount, items: arrayForReturn }
-        //     }
-        //     else {
-        //         const postsBloggerWithOutPaginator = await this.postsModel.find({ bloggerId: bloggerId }).lean()
-        //         return { pagesCount: 0, page: page, pageSize: pageSize, totalCount, items: postsBloggerWithOutPaginator }
-        //     }
-    
-        // }
+    // Проверка существования блога
+    const checkBloggerExist = await this.dataSource.query(`SELECT COUNT(*)::int as count FROM "blog" WHERE id = $1`, [blogId]);
+    if (checkBloggerExist[0].count < 1) {
+        return null; 
     }
+
+    // Получаем общее количество постов для данного блога
+    const [{ count: totalCount }] = await this.dataSource.query(`SELECT COUNT(*)::int AS count FROM "posts" WHERE blog_id = $1`, [blogId]);
+    const pagesCount = Math.ceil(totalCount / limit);
+
+    // Основной запрос на получение постов с лайками и дизлайками
+    const getAllPosts = await this.dataSource.query(
+        `
+        SELECT 
+            p.id,
+            p.title,
+            p.short_description AS "shortDescription",
+            p.content,
+            p.blog_id AS "blogId",
+            p.blog_name AS "blogName",
+            p.created_at AS "createdAt",
+            COALESCE(pl.likes_count, 0) AS "likesCount",
+            COALESCE(pd.dislikes_count, 0) AS "dislikesCount",
+            'None' AS "myStatus",  -- всегда "None" так как userId не передается
+            COALESCE(latest_likes.likes, '[]'::json) AS "newestLikes" -- Получаем последние лайки
+        FROM "posts" p
+        LEFT JOIN (
+            SELECT 
+                post_id,
+                COUNT(*) AS likes_count
+            FROM "posts_like_storage"
+            GROUP BY post_id
+        ) pl ON p.id = pl.post_id
+        LEFT JOIN (
+            SELECT 
+                post_id,
+                COUNT(*) AS dislikes_count
+            FROM "posts_dislike_storage"
+            GROUP BY post_id
+        ) pd ON p.id = pd.post_id
+        LEFT JOIN (
+            SELECT 
+                post_id,
+                json_agg(json_build_object('addedAt', added_at, 'userId', user_id, 'login', user_login) 
+                ORDER BY added_at DESC) AS likes
+            FROM "posts_like_storage"
+            GROUP BY post_id
+        ) latest_likes ON p.id = latest_likes.post_id
+        WHERE p.blog_id = $1
+        ORDER BY ${sortField} ${order}
+        LIMIT $2 OFFSET $3
+        `,
+        [blogId, limit, offset]
+    );
+
+    // Форматируем вывод
+    return {
+        pagesCount,
+        page: pageNumber,
+        pageSize: limit,
+        totalCount,
+        items: getAllPosts.map(post => ({
+            id: post.id.toString(),
+            title: post.title,
+            shortDescription: post.shortDescription,
+            content: post.content,
+            blogId: post.blogId.toString(),
+            blogName: post.blogName,
+            createdAt: post.createdAt,
+            extendedLikesInfo: {
+                likesCount: post.likesCount,
+                dislikesCount: post.dislikesCount,
+                myStatus: post.myStatus, // всегда "None"
+                newestLikes: post.newestLikes.slice(0, 3) // последние 3 лайка
+            },
+        }))
+    };
+}
+
 
     // Возвращаем блог для внешних ресурсов, VIEW версия
     async targetBlog(id: string, userId?: string): Promise<BlogsTypeView | null> {

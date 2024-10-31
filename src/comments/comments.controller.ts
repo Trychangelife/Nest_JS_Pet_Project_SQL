@@ -13,6 +13,7 @@ import { UpdateCommentCommand } from "./application/use-cases/Update_Comment_By_
 import { LikeDislikeCommentCommand } from "./application/use-cases/Like_dislike_for_comment";
 import { CommentsType } from "./dto/CommentsType";
 import { CheckBanStatusSuperAdminCommand } from "src/superAdmin/SAusers/application/useCases/check_banStatus";
+import { LIKES } from "src/utils/types";
 
 
 
@@ -91,7 +92,7 @@ export class CommentsController {
     @UseGuards(JwtAuthGuard)
     @UseFilters(new HttpExceptionFilterForLikes())
     @Put(':commentId/like-status')
-    async like_dislike(@Param() params, @Body() likeStatus: LikesDTO, @Req() req, @Res() res) {
+    async like_dislike(@Param() params, @Body() likeStatus: LIKES, @Req() req, @Res() res) {
         const like_dislike: object | string = await this.commandBus.execute(new LikeDislikeCommentCommand(params.commentId, likeStatus, req.user!.id, req.user!.login));
         if (like_dislike !== "404" && like_dislike !== '400') {
             throw new HttpException(like_dislike,HttpStatus.NO_CONTENT)

@@ -20,7 +20,6 @@ export class GetAllPostsSpecificBlogUseCase {
     constructor (protected postsRepository: BlogsRepositorySql ) {}
 
     async execute(command: GetAllPostsSpecificBlogCommand): Promise<object | undefined> {
-        console.log("service:", command.blogId)
         let skip = 0
         if (command.page && command.pageSize) {
             skip = (command.page - 1) * command.pageSize

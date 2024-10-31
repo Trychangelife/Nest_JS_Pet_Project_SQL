@@ -1,12 +1,13 @@
 import { CommandHandler } from "@nestjs/cqrs"
 import { CommentsRepository } from "src/comments/repositories/comments.repository"
 import { LikesDTO } from "src/utils/class-validator.form"
+import { LIKES } from "src/utils/types"
 
 
 export class LikeDislikeCommentCommand {
     constructor(
         public commmentId: string, 
-        public likeStatus: LikesDTO, 
+        public likeStatus: LIKES, 
         public userId: string, 
         public login: string) {
         

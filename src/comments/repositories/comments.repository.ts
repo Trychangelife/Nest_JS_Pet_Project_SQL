@@ -18,36 +18,67 @@ export class CommentsRepository {
     }
     async commentsById(commentId: string, userId?: string): Promise<CommentsTypeView | null> {
         try {
+            // Основной запрос для получения комментария с лайками и дизлайками
             const [comment] = await this.dataSource.query(
                 `
-            SELECT * 
-            FROM "comments" WHERE id = $1
-                `, [commentId])
-            if (comment !== null) {
-                const resultView: CommentsTypeView = {
-                    id: comment.id.toString(),
-                    content: comment.content,
-                    commentatorInfo: {
-                        userId: comment.author_user_id,
-                        userLogin: comment.author_login_id
-                    }, 
-                    createdAt: comment.created_at,
-                    likesInfo: {
-                        likesCount: 0,
-                        dislikesCount: 0,
-                        myStatus: LIKES.NONE
-                    }
+                SELECT 
+                    c.id,
+                    c.content,
+                    c.author_user_id AS "userId",
+                    c.author_login_id AS "userLogin",
+                    c.created_at AS "createdAt",
+                    COALESCE(cl.likes_count, 0) AS "likesCount",
+                    COALESCE(cd.dislikes_count, 0) AS "dislikesCount",
+                    'None' AS "myStatus"  -- Всегда "None" так как userId не передается
+                FROM "comments" c
+                LEFT JOIN ( -- Подсчет количества лайков
+                    SELECT 
+                        comment_id,
+                        COUNT(*) AS likes_count
+                    FROM "comments_like_storage"
+                    WHERE comment_id = $1
+                    GROUP BY comment_id
+                ) cl ON c.id = cl.comment_id
+                LEFT JOIN ( -- Подсчет количества дизлайков
+                    SELECT 
+                        comment_id,
+                        COUNT(*) AS dislikes_count
+                    FROM "comments_dislike_storage"
+                    WHERE comment_id = $1
+                    GROUP BY comment_id
+                ) cd ON c.id = cd.comment_id
+                WHERE c.id = $1
+                `,
+                [commentId]
+            );
+    
+            if (!comment) {
+                return null;
+            }
+    
+            // Формируем объект ответа
+            const resultView: CommentsTypeView = {
+                id: comment.id.toString(),
+                content: comment.content,
+                commentatorInfo: {
+                    userId: comment.userId,
+                    userLogin: comment.userLogin
+                },
+                createdAt: comment.createdAt,
+                likesInfo: {
+                    likesCount: comment.likesCount,
+                    dislikesCount: comment.dislikesCount,
+                    myStatus: LIKES.NONE // Обезличенный запрос, всегда "None"
                 }
-                return resultView
-            }
-            else {
-                return null
-            }
+            };
+            return resultView;
         } catch (error) {
-            return null
+            console.error('Error fetching comment by ID:', error);
+            return null;
         }
-
     }
+    
+    
     // async commentsByUserId(commentId: string, userId?: string): Promise<CommentsType | null> {
     //     const result = await this.commentsModel.findOne({ id: commentId }, commentsVievModel )
     //     const checkOnDislike = (await this.commentsModel.findOne({$and: [{id: commentId}, {"dislikeStorage.userId": userId}]}).lean())
@@ -118,7 +149,7 @@ export class CommentsRepository {
     }
     async like_dislike(
         commentId: string, 
-        likeStatus: LikesDTO, 
+        likeStatus: LIKES, 
         userId: string, 
         login: string
     ): Promise<string | object> {
@@ -143,139 +174,80 @@ export class CommentsRepository {
     
             const comment = foundComment[0];
             const currentLikeStatus = likeStatus[Object.keys(likeStatus)[0]];
-    
-            // Обновляем счетчики лайков и дизлайков на основе текущего статуса
-            if (currentLikeStatus === 'Like') {
-                // Проверяем, есть ли дизлайк, чтобы убрать его, если он существует
-                const checkDislike = await queryRunner.query(
-                    `SELECT * FROM comments_dislike_storage WHERE user_id = $1 AND comment_id = $2`, 
-                    [userId, commentId]
-                );
-    
-                if (checkDislike.length > 0) {
+
+            const checkOnDislike = await queryRunner.query(
+                `SELECT * FROM comments_dislike_storage WHERE user_id = $1 AND comment_id = $2`, 
+                [userId, commentId]
+            );
+
+            const checkOnLike = await queryRunner.query(
+                `SELECT * FROM comments_like_storage WHERE user_id = $1 AND comment_id = $2`, 
+                [userId, commentId]
+            );
+            // LIKE статус
+            if (currentLikeStatus === "Like") {
+
+                if (checkOnDislike.length > 0) {
+                    // Удаляем дизлайк
                     await queryRunner.query(
-                        `UPDATE comments SET dislikes_count = dislikes_count - 1 WHERE id = $1`, 
-                        [commentId]
-                    );
-    
-                    await queryRunner.query(
-                        `DELETE FROM comments_dislike_storage WHERE user_id = $1 AND comment_id = $2`, 
+                        `DELETE FROM comments_dislike_storage WHERE user_id = $1 AND comment_id = $2`,
                         [userId, commentId]
                     );
                 }
-    
-                // Проверяем, стоит ли уже лайк, чтобы убрать его, если он существует
-                const checkLike = await queryRunner.query(
-                    `SELECT * FROM comments_like_storage WHERE user_id = $1 AND comment_id = $2`, 
-                    [userId, commentId]
-                );
-    
-                if (checkLike.length > 0) {
-                    return comment;
-                } else {
+                if (checkOnLike.length === 0) {
+                    // Добавляем лайк
                     await queryRunner.query(
-                        `UPDATE comments SET likes_count = likes_count + 1 WHERE id = $1`, 
-                        [commentId]
-                    );
-    
-                    await queryRunner.query(
-                        `INSERT INTO comments_like_storage (added_at, user_id, user_login, comment_id) VALUES ($1, $2, $3, $4)`, 
+                        `INSERT INTO comments_like_storage (added_at, user_id, user_login, comment_id) VALUES ($1, $2, $3, $4)`,
                         [new Date(), userId, login, commentId]
                     );
-    
-                    return comment;
                 }
-    
-            } else if (currentLikeStatus === 'Dislike') {
-                // Проверяем, стоит ли уже лайк, чтобы убрать его, если он существует
-                const checkLike = await queryRunner.query(
-                    `SELECT * FROM comments_like_storage WHERE user_id = $1 AND comment_id = $2`, 
-                    [userId, commentId]
-                );
-    
-                if (checkLike.length > 0) {
-                    await queryRunner.query(
-                        `UPDATE comments SET likes_count = likes_count - 1 WHERE id = $1`, 
-                        [commentId]
-                    );
-    
-                    await queryRunner.query(
-                        `DELETE FROM comments_like_storage WHERE user_id = $1 AND comment_id = $2`, 
-                        [userId, commentId]
-                    );
-                }
-    
-                // Проверяем, стоит ли уже дизлайк, чтобы убрать его, если он существует
-                const checkDislike = await queryRunner.query(
-                    `SELECT * FROM comments_dislike_storage WHERE user_id = $1 AND comment_id = $2`, 
-                    [userId, commentId]
-                );
-    
-                if (checkDislike.length > 0) {
-                    return comment;
-                } else {
-                    await queryRunner.query(
-                        `UPDATE comments SET dislikes_count = dislikes_count + 1 WHERE id = $1`, 
-                        [commentId]
-                    );
-    
-                    await queryRunner.query(
-                        `INSERT INTO comments_dislike_storage (added_at, user_id, user_login, comment_id) VALUES ($1, $2, $3, $4)`, 
-                        [new Date(), userId, login, commentId]
-                    );
-    
-                    return comment;
-                }
-    
-            } else if (currentLikeStatus === 'None') {
-                // Если лайк стоит, убираем его
-                const checkLike = await queryRunner.query(
-                    `SELECT * FROM comments_like_storage WHERE user_id = $1 AND comment_id = $2`, 
-                    [userId, commentId]
-                );
-    
-                if (checkLike.length > 0) {
-                    await queryRunner.query(
-                        `UPDATE comments SET likes_count = likes_count - 1 WHERE id = $1`, 
-                        [commentId]
-                    );
-    
-                    await queryRunner.query(
-                        `DELETE FROM comments_like_storage WHERE user_id = $1 AND comment_id = $2`, 
-                        [userId, commentId]
-                    );
-    
-                    return comment;
-                }
-    
-                // Если дизлайк стоит, убираем его
-                const checkDislike = await queryRunner.query(
-                    `SELECT * FROM comments_dislike_storage WHERE user_id = $1 AND comment_id = $2`, 
-                    [userId, commentId]
-                );
-    
-                if (checkDislike.length > 0) {
-                    await queryRunner.query(
-                        `UPDATE comments SET dislikes_count = dislikes_count - 1 WHERE id = $1`, 
-                        [commentId]
-                    );
-    
-                    await queryRunner.query(
-                        `DELETE FROM comments_dislike_storage WHERE user_id = $1 AND comment_id = $2`, 
-                        [userId, commentId]
-                    );
-    
-                    return comment;
-                }
+
+                return comment;
             }
-    
-            await queryRunner.commitTransaction();
-            return comment;
-    
+
+            // DISLIKE статус
+            if (currentLikeStatus === "Dislike") {
+
+                if (checkOnLike.length > 0) {
+                    // Удаляем дизлайк
+                    await queryRunner.query(
+                        `DELETE FROM comments_like_storage WHERE user_id = $1 AND comment_id = $2`,
+                        [userId, commentId]
+                    );
+                }
+                if (checkOnDislike.length === 0) {
+                    // Добавляем лайк
+                    await queryRunner.query(
+                        `INSERT INTO comments_dislike_storage (added_at, user_id, user_login, comment_id) VALUES ($1, $2, $3, $4)`,
+                        [new Date(), userId, login, commentId]
+                    );
+
+                }
+                return comment;
+            }
+
+            // NONE статус
+            if (currentLikeStatus === "None") {
+
+                if (checkOnLike.length > 0) {
+                    await queryRunner.query(
+                        `DELETE FROM comments_like_storage WHERE user_id = $1 AND comment_id = $2`,
+                        [userId, commentId]
+                    );
+                }
+                if (checkOnDislike.length > 0) {
+                    await queryRunner.query(
+                        `DELETE FROM comments_dislike_storage WHERE user_id = $1 AND comment_id = $2`,
+                        [userId, commentId]
+                    );
+                }
+                return comment;
+            }
         } catch (error) {
             await queryRunner.rollbackTransaction();
             throw new Error('Error while processing like/dislike operation');
         } finally {
+            await queryRunner.commitTransaction();
             await queryRunner.release();
         }
     }

@@ -17,7 +17,7 @@ export class LikeDislikeForPostUseCase {
     constructor(protected postsRepository: PostsRepositorySql) { }
 
     async execute(command: LikeDislikeForPostCommand): Promise<string | object> {
-        return await this.postsRepository.like_Dislike(command.postId, command.likeStatus, command.userId, command.login)
+        return await this.postsRepository.likeDislikeForPost(command.postId, command.likeStatus, command.userId, command.login)
     }
 }
 
