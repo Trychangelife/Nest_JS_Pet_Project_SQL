@@ -291,7 +291,7 @@ export class PostsRepositorySql {
         const [totalCountResult] = await this.dataSource.query(`SELECT COUNT(*)::int AS count FROM "comments" WHERE post_id = $1`, [postId]);
         const totalCount = parseInt(totalCountResult.count, 10);
         const pagesCount = Math.ceil(totalCount / limit);
-        const queryParams =  [limit, offset, postId];
+        const queryParams = [limit, offset, postId];
 
         const getAllComments = await this.dataSource.query(
             `
@@ -304,9 +304,9 @@ export class PostsRepositorySql {
             queryParams
         );
 
-         // Возвращаем форматированный объект
+        // Возвращаем форматированный объект
 
-         return {
+        return {
             pagesCount,
             page: pageNumber,
             pageSize: limit,
@@ -319,14 +319,14 @@ export class PostsRepositorySql {
                     userLogin: e.author_login_id
                 },
                 createdAt: e.created_at,
-                likesInfo:{
+                likesInfo: {
                     likesCount: 0,
                     dislikesCount: 0,
                     myStatus: LIKES.NONE,
                     newestLikes: []
                 },
             }))
-        };   
+        };
 
         // if (findPosts !== null) {
         // const findComments = await this.commentsModel.find({postId: postId}, commentsVievModel).skip(skip).limit(limit).lean()
@@ -361,94 +361,149 @@ export class PostsRepositorySql {
         // else { return false}
     }
 
-    // async like_dislike(postId: string, likeStatus: LIKES, userId: string, login: string): Promise<string | object> {
-    //     const foundPost = await this.postsModel.findOne({ id: postId }, postViewModel).lean()
-    //     const foundUser = await this.usersModel.findOne({ id: userId }).lean()
-    //     try {
-    //         const likesCountPlusLike = foundPost.extendedLikesInfo.likesCount + 1
-    //         const likesCountMinusLike = foundPost.extendedLikesInfo.likesCount - 1
-    //         const dislikesCountPlusLike = foundPost.extendedLikesInfo.dislikesCount + 1
-    //         const dislikesCountMinusDislike = foundPost.extendedLikesInfo.dislikesCount - 1
 
+    async like_Dislike(
+        postId: string,
+        likeStatus: LIKES,
+        userId: string,
+        login: string
+    ): Promise<string | object> {
 
-    //     const keys = Object.keys(likeStatus)
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            // Поиск поста и пользователя
+            const foundPost = await queryRunner.query(
+                `SELECT * FROM posts WHERE id = $1`,
+                [postId]
+            );
+            const foundUser = await queryRunner.query(
+                `SELECT * FROM users WHERE id = $1`,
+                [userId]
+            );
 
-    //     // WHEN WE HAVE LIKE
-    //     if (foundPost !== null && foundUser !== null && likeStatus === "Like") {
-    //         const checkOnLike = await this.postsModel.find({$and: [{"extendedLikesInfo.newestLikes.userId": userId}, {id: postId}] } ).lean()
-    //         const howMuchLikes = await this.postsModel.find({"extendedLikesInfo.newestLikes": []}).count()
-    //         const checkOnDislike = await this.postsModel.find({$and: [{"dislikeStorage.userId": userId}, {id: postId}] } ).lean()
-    //         console.log(checkOnLike)
-    //         if (checkOnDislike.length > 0) {
-    //             // Проверяем, вдруг уже есть дизлайк, нужно его убрать (одновременно два статуса быть не может)
-    //             await this.postsModel.updateOne({ id: postId }, { $set: {"extendedLikesInfo.dislikesCount": dislikesCountMinusDislike } })
-    //             await this.postsModel.updateOne({id: postId}, {$pull: {dislikeStorage: {userId}}})
-    //         }
-    //         if (checkOnLike.length > 0) {
-    //             // Лайк уже стоит, значит убираем из всех storage упоминания о этом лайке
-    //             //await this.postsModel.updateOne({ id: postId }, { $set: {"extendedLikesInfo.likesCount": likesCountMinusLike } })
-    //             //await this.postsModel.updateOne({id: postId}, {$pull: {"extendedLikesInfo.newestLikes": {userId}}})
-    //             //await this.postsModel.updateOne({id: postId}, {$pull: {likeStorage: {userId}}})
-    //             return foundPost
-    //         }
-    //         else {
-    //             // Лайка нет, добавляем информацию о оставленном лайке в storage 
-    //             await this.postsModel.updateOne({ id: postId }, { $set: {"extendedLikesInfo.likesCount": likesCountPlusLike } })
-    //             await this.postsModel.findOneAndUpdate({id: postId}, {$push: {"extendedLikesInfo.newestLikes": {addedAt: new Date(), userId: userId, login: login}}})
-    //             await this.postsModel.findOneAndUpdate({id: postId}, {$push: {likeStorage: {addedAt: new Date(), userId: userId, login: login}}})
-    //             return foundPost
-    //         }
-    //     }
-    //     // WHEN WE HAVE DISLIKE
-    //     else if (foundPost !== null && foundUser !== null && likeStatus === "Dislike") {
-    //         const checkOnDislike = await this.postsModel.find({$and: [{"dislikeStorage.userId": userId}, {id: postId}] } ).lean()
-    //         const checkOnLike = await this.postsModel.find({$and: [{"extendedLikesInfo.newestLikes.userId": userId}, {id: postId}] } ).lean()
-    //         if (checkOnLike.length > 0) {
-    //             // Проверяем, вдруг уже есть лайк, нужно его убрать (одновременно два статуса быть не может)
-    //             await this.postsModel.updateOne({ id: postId }, { $set: {"extendedLikesInfo.likesCount": likesCountMinusLike } })
-    //             await this.postsModel.updateOne({id: postId}, {$pull: {"extendedLikesInfo.newestLikes": {userId}}})
-    //             await this.postsModel.updateOne({id: postId}, {$pull: {likeStorage: {userId}}})
-    //         }
-    //         if (checkOnDislike.length > 0) {
-    //             // Дизлайк уже стоит, значит убираем из всех storage упоминания о этом Дизлайке
-    //         //await this.postsModel.updateOne({ id: postId }, { $set: {"extendedLikesInfo.dislikesCount": dislikesCountMinusDislike } })
-    //         //await this.postsModel.updateOne({id: postId}, {$pull: {dislikeStorage: {userId}}})
-    //         return foundPost
-    //         }
-    //         else {
-    //             // Дизлайка нет, добавляем информацию о оставленном Дизлайке в storage 
-    //             await this.postsModel.updateOne({ id: postId }, { $set: {"extendedLikesInfo.dislikesCount": dislikesCountPlusLike } })
-    //             await this.postsModel.findOneAndUpdate({id: postId}, {$push: {dislikeStorage: {addedAt: new Date(), userId: userId, login: login}}})
-    //             return foundPost
-    //     }
-    //     } 
-    //     // WHEN WE HAVE NONE
-    //     else if (foundPost !== null && foundUser !== null && likeStatus === "None") {
-    //         const checkOnDislike = await this.postsModel.find({$and: [{"dislikeStorage.userId": userId}, {id: postId}] } ).lean()
-    //         const checkOnLike = await this.postsModel.find({$and: [{"likeStorage.userId": userId}, {id: postId}] } ).lean()
+            if (!foundPost[0] || !foundUser[0]) {
+                return foundUser ? '404' : '400';
+            }
 
-    //         // Проверяем наличие лайков/дизлайков, если что-то есть, убираем, так как статус NONE
-    //         if (checkOnLike.length > 0) {
-    //             await this.postsModel.updateOne({id: postId }, { $set: {"extendedLikesInfo.likesCount": likesCountMinusLike } })
-    //             await this.postsModel.updateOne({id: postId}, {$pull: {"extendedLikesInfo.newestLikes": {userId}}})
-    //             await this.postsModel.updateOne({id: postId}, {$pull: {likeStorage: {userId}}})
-    //             return foundPost
-    //         }
-    //        else if (checkOnDislike.length > 0) {
-    //             await this.postsModel.updateOne({ id: postId }, { $set: {"extendedLikesInfo.dislikesCount": dislikesCountMinusDislike } })
-    //             await this.postsModel.updateOne({id: postId}, {$pull: {dislikeStorage: {userId}}})
-    //             return foundPost
-    //        }
+            const post = foundPost[0];
+            const likesCountPlusLike = post.likes_count + 1;
+            const likesCountMinusLike = post.likes_count - 1;
+            const dislikesCountPlusLike = post.dislikes_count + 1;
+            const dislikesCountMinusDislike = post.dislikes_count - 1;
 
-    //     }
-    //     else if (foundUser == null) {
-    //         return '400'
-    //     }
-    //     else {
-    //         return "404"
-    //     }
-    //     } catch (error) {
-    //     return "404"
-    // }
-    // }
+            // LIKE статус
+            if (likeStatus === "Like") {
+                const checkOnLike = await queryRunner.query(
+                    `SELECT * FROM posts_like_storage WHERE user_id = $1 AND post_id = $2`,
+                    [userId, postId]
+                );
+                const checkOnDislike = await queryRunner.query(
+                    `SELECT * FROM posts_dislike_storage WHERE user_id = $1 AND post_id = $2`,
+                    [userId, postId]
+                );
+
+                if (checkOnDislike.length > 0) {
+                    await queryRunner.query(
+                        `UPDATE posts SET dislikes_count = $1 WHERE id = $2`,
+                        [dislikesCountMinusDislike, postId]
+                    );
+                    await queryRunner.query(
+                        `DELETE FROM posts_dislike_storage WHERE user_id = $1 AND post_id = $2`,
+                        [userId, postId]
+                    );
+                }
+
+                if (checkOnLike.length === 0) {
+                    await queryRunner.query(
+                        `UPDATE posts SET likes_count = $1 WHERE id = $2`,
+                        [likesCountPlusLike, postId]
+                    );
+                    await queryRunner.query(
+                        `INSERT INTO posts_like_storage (added_at, user_id, user_login, post_id) VALUES ($1, $2, $3, $4)`,
+                        [new Date(), userId, login, postId]
+                    );
+                }
+                return post;
+            }
+
+            // DISLIKE статус
+            if (likeStatus === "Dislike") {
+                const checkOnDislike = await queryRunner.query(
+                    `SELECT * FROM posts_dislike_storage WHERE user_id = $1 AND post_id = $2`,
+                    [userId, postId]
+                );
+                const checkOnLike = await queryRunner.query(
+                    `SELECT * FROM posts_like_storage WHERE user_id = $1 AND post_id = $2`,
+                    [userId, postId]
+                );
+
+                if (checkOnLike.length > 0) {
+                    await queryRunner.query(
+                        `UPDATE posts SET likes_count = $1 WHERE id = $2`,
+                        [likesCountMinusLike, postId]
+                    );
+                    await queryRunner.query(
+                        `DELETE FROM posts_like_storage WHERE user_id = $1 AND post_id = $2`,
+                        [userId, postId]
+                    );
+                }
+
+                if (checkOnDislike.length === 0) {
+                    await queryRunner.query(
+                        `UPDATE posts SET dislikes_count = $1 WHERE id = $2`,
+                        [dislikesCountPlusLike, postId]
+                    );
+                    await queryRunner.query(
+                        `INSERT INTO posts_dislike_storage (added_at, user_id, user_login, post_id) VALUES ($1, $2, $3, $4)`,
+                        [new Date(), userId, login, postId]
+                    );
+                }
+                return post;
+            }
+
+            // NONE статус
+            if (likeStatus === "None") {
+                const checkOnDislike = await queryRunner.query(
+                    `SELECT * FROM posts_dislike_storage WHERE user_id = $1 AND post_id = $2`,
+                    [userId, postId]
+                );
+                const checkOnLike = await queryRunner.query(
+                    `SELECT * FROM posts_like_storage WHERE user_id = $1 AND post_id = $2`,
+                    [userId, postId]
+                );
+
+                if (checkOnLike.length > 0) {
+                    await queryRunner.query(
+                        `UPDATE posts SET likes_count = $1 WHERE id = $2`,
+                        [likesCountMinusLike, postId]
+                    );
+                    await queryRunner.query(
+                        `DELETE FROM posts_like_storage WHERE user_id = $1 AND post_id = $2`,
+                        [userId, postId]
+                    );
+                }
+                if (checkOnDislike.length > 0) {
+                    await queryRunner.query(
+                        `UPDATE posts SET dislikes_count = $1 WHERE id = $2`,
+                        [dislikesCountMinusDislike, postId]
+                    );
+                    await queryRunner.query(
+                        `DELETE FROM posts_dislike_storage WHERE user_id = $1 AND post_id = $2`,
+                        [userId, postId]
+                    );
+                }
+                return post;
+            }
+
+            return "404";
+        } catch (error) {
+            return "404";
+        }
+        finally {
+            await queryRunner.release();
+        }
+    }
+
 }

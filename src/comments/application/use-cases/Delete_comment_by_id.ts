@@ -14,9 +14,9 @@ export class DeleteCommentCommand {
 export class DeleteCommentUseCase {
     constructor (protected commentsRepository: CommentsRepository ) {}
 
-    // async execute(command: DeleteCommentCommand): Promise<boolean | null> {
-    //     return await this.commentsRepository.deleteCommentByCommentId(command.commentId, command.userId)
-    // }
+    async execute(command: DeleteCommentCommand): Promise<boolean | null> {
+        return await this.commentsRepository.deleteCommentByCommentId(command.commentId, command.userId)
+    }
 }
 
 
