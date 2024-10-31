@@ -131,21 +131,29 @@ export class CommentsRepository {
         }
     }
     async deleteCommentByCommentId(commentId: string, userId: string): Promise<boolean | null> {
-        const [comment] = await this.dataSource.query(
-            `
-        SELECT * 
-        FROM "comments" WHERE id = $1
-            `, [commentId])
-        if (commentId !== null && comment.author_user_id === userId) {
-            await this.dataSource.query(`DELETE FROM "comments" WHERE id = $1`, [commentId])
-            return true
-        }
-        if (comment == null) {
+
+
+        try {
+            const [comment] = await this.dataSource.query(
+                `
+            SELECT * 
+            FROM "comments" WHERE id = $1
+                `, [commentId])
+            if (commentId !== null && comment.author_user_id === userId) {
+                await this.dataSource.query(`DELETE FROM "comments" WHERE id = $1`, [commentId])
+                return true
+            }
+            if (comment == null) {
+                return null
+            }
+            else {
+                return false
+            }
+        } catch (error) {
+            console.log(error)
             return null
         }
-        else {
-            return false
-        }
+        
     }
     async like_dislike(
         commentId: string, 
