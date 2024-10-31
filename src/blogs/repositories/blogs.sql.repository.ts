@@ -164,8 +164,8 @@ async allPostsSpecificBlogger(
             blogName: post.blogName,
             createdAt: post.createdAt,
             extendedLikesInfo: {
-                likesCount: post.likesCount,
-                dislikesCount: post.dislikesCount,
+                likesCount: Number(post.likesCount),
+                dislikesCount: Number(post.dislikesCount),
                 myStatus: post.myStatus, // всегда "None"
                 newestLikes: post.newestLikes.slice(0, 3) // последние 3 лайка
             },

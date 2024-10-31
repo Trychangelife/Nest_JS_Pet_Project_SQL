@@ -61,13 +61,13 @@ export class CommentsRepository {
                 id: comment.id.toString(),
                 content: comment.content,
                 commentatorInfo: {
-                    userId: comment.userId,
+                    userId: comment.userId.toString(),
                     userLogin: comment.userLogin
                 },
                 createdAt: comment.createdAt,
                 likesInfo: {
-                    likesCount: comment.likesCount,
-                    dislikesCount: comment.dislikesCount,
+                    likesCount: Number(comment.likesCount),
+                    dislikesCount: Number(comment.dislikesCount),
                     myStatus: LIKES.NONE // Обезличенный запрос, всегда "None"
                 }
             };

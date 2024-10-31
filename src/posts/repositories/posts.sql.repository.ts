@@ -120,8 +120,8 @@ export class PostsRepositorySql {
                 blogName: post.blogName,
                 createdAt: post.createdAt,
                 extendedLikesInfo: {
-                    likesCount: post.likesCount,
-                    dislikesCount: post.dislikesCount,
+                    likesCount: Number(post.likesCount),
+                    dislikesCount: Number(post.dislikesCount),
                     myStatus: post.myStatus, // всегда "None"
                     newestLikes: post.newestLikes.slice(0, 3) // последние 3 лайка
                 },
@@ -261,8 +261,8 @@ export class PostsRepositorySql {
                     blogName: post.blogName,
                     createdAt: post.createdAt,
                     extendedLikesInfo: {
-                        likesCount: post.likesCount,
-                        dislikesCount: post.dislikesCount,
+                        likesCount: Number(post.likesCount),
+                        dislikesCount: Number(post.dislikesCount),
                         myStatus: post.myStatus, // всегда "None"
                         newestLikes: post.newestLikes.slice(0, 3) // последние 3 лайка
                     }
@@ -400,8 +400,8 @@ export class PostsRepositorySql {
                 },
                 createdAt: e.createdAt,
                 likesInfo: {
-                    likesCount: e.likesCount,
-                    dislikesCount: e.dislikesCount,
+                    likesCount: Number(e.likesCount),
+                    dislikesCount: Number(e.dislikesCount),
                     myStatus: 'None' // Всегда "None" для обезличенных запросов
                 },
             }))
