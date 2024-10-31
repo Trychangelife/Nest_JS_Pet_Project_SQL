@@ -11,9 +11,8 @@ import { GetCommentCommand } from "./application/use-cases/Get_comment_by_id";
 import { DeleteCommentCommand } from "./application/use-cases/Delete_comment_by_id";
 import { UpdateCommentCommand } from "./application/use-cases/Update_Comment_By_Comment_Id";
 import { LikeDislikeCommentCommand } from "./application/use-cases/Like_dislike_for_comment";
-import { CommentsType } from "./dto/CommentsType";
-import { CheckBanStatusSuperAdminCommand } from "src/superAdmin/SAusers/application/useCases/check_banStatus";
 import { LIKES } from "src/utils/types";
+import { JwtFakeAuthGuard } from "src/guards/jwt-fake-auth.guard";
 
 
 
@@ -27,11 +26,11 @@ export class CommentsController {
         private commandBus: CommandBus) {
     }
 
+    @UseGuards(JwtFakeAuthGuard)
     @Get(':id')
     async getCommentById(@Param() params, @Req() req) {
-        //const token = req.headers.authorization.split(' ')[1]
-        //const userId = await this.jwtServiceClass.getUserByAccessToken(token)
-        const result = await this.commandBus.execute(new GetCommentCommand(params.id)); // здесь был UserID
+        const userId = req?.user?.id ?? null;
+        const result = await this.commandBus.execute(new GetCommentCommand(params.id, userId)); // здесь был UserID
         //const checkBan = await this.commandBus.execute(new CheckBanStatusSuperAdminCommand(result?.commentatorInfo.userId, null))
         //if (result !== null && checkBan !== true && checkBan !== null) {
         if (result !== null) {

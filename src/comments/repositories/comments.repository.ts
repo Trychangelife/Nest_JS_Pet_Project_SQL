@@ -29,14 +29,23 @@ export class CommentsRepository {
                     c.created_at AS "createdAt",
                     COALESCE(cl.likes_count, 0) AS "likesCount",
                     COALESCE(cd.dislikes_count, 0) AS "dislikesCount",
-                    'None' AS "myStatus"  -- Всегда "None" так как userId не передается
+                    CASE 
+                        WHEN CAST($2 AS integer) IS NOT NULL AND EXISTS (
+                            SELECT 1 FROM "comments_like_storage" cls 
+                            WHERE cls.comment_id = c.id AND cls.user_id = $2
+                        ) THEN 'Like'
+                        WHEN CAST($2 AS integer) IS NOT NULL AND EXISTS (
+                            SELECT 1 FROM "comments_dislike_storage" cds 
+                            WHERE cds.comment_id = c.id AND cds.user_id = $2
+                        ) THEN 'Dislike'
+                        ELSE 'None'
+                    END AS "myStatus"
                 FROM "comments" c
                 LEFT JOIN ( -- Подсчет количества лайков
                     SELECT 
                         comment_id,
                         COUNT(*) AS likes_count
                     FROM "comments_like_storage"
-                    WHERE comment_id = $1
                     GROUP BY comment_id
                 ) cl ON c.id = cl.comment_id
                 LEFT JOIN ( -- Подсчет количества дизлайков
@@ -44,12 +53,11 @@ export class CommentsRepository {
                         comment_id,
                         COUNT(*) AS dislikes_count
                     FROM "comments_dislike_storage"
-                    WHERE comment_id = $1
                     GROUP BY comment_id
                 ) cd ON c.id = cd.comment_id
                 WHERE c.id = $1
                 `,
-                [commentId]
+                [commentId, userId]
             );
     
             if (!comment) {
@@ -68,7 +76,7 @@ export class CommentsRepository {
                 likesInfo: {
                     likesCount: Number(comment.likesCount),
                     dislikesCount: Number(comment.dislikesCount),
-                    myStatus: LIKES.NONE // Обезличенный запрос, всегда "None"
+                    myStatus: comment.myStatus
                 }
             };
             return resultView;
@@ -77,6 +85,7 @@ export class CommentsRepository {
             return null;
         }
     }
+    
     
     
     // async commentsByUserId(commentId: string, userId?: string): Promise<CommentsType | null> {

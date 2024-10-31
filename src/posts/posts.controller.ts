@@ -21,6 +21,7 @@ import { CheckBanStatusSuperAdminCommand } from "src/superAdmin/SAusers/applicat
 import { PostsType } from "./dto/PostsType";
 import { CheckForbiddenCommand } from "./application/use-cases/check_forbidden";
 import { GetAllPostsSpecificBlogCommand } from "src/superAdmin/SAblog/application/use-cases/get_all_posts_specific_blog";
+import { JwtFakeAuthGuard } from "src/guards/jwt-fake-auth.guard";
 
 @Controller('posts')
 export class PostController {
@@ -46,18 +47,21 @@ export class PostController {
     //         return getAllPosts;
     //     }
     // }
+    @UseGuards(JwtFakeAuthGuard)
     @Get()
-    async getAllPost(@Query() query: { pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }) {
+    async getAllPost(@Query() query: { pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }, @Req() req) {
         const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
-        const full: object = await this.commandBus.execute(new GetAllPostsCommand( paginationData.pageSize, paginationData.pageNumber,  paginationData.sortBy, paginationData.sortDirection));
+        const userId = req?.user?.id ?? null;
+        const full: object = await this.commandBus.execute(new GetAllPostsCommand( paginationData.pageSize, paginationData.pageNumber,  paginationData.sortBy, paginationData.sortDirection, userId));
         return full
     }
-    
+    @UseGuards(JwtFakeAuthGuard)
     @Get(':id')
     async getPostByID(@Param() params, @Req() req) {
             //const token = req.headers.authorization.split(' ')[1]
             //const userId = await this.jwtServiceClass.getUserByAccessToken(token)
-            const takePost: PostsType | null = await this.commandBus.execute(new GetSinglePostCommand(params.id)) // Тут еще был userId из токена
+            const userId = req?.user?.id ?? null;
+            const takePost: PostsType | null = await this.commandBus.execute(new GetSinglePostCommand(params.id, userId)) // Тут еще был userId из токена
             //const checkBan = await this.commandBus.execute(new CheckBanStatusSuperAdminCommand(null, takePost?.blogId))
             if (takePost !== null) { 
             //if (takePost !== undefined && checkBan !== true && checkBan !== null) { - раскомментирую когда дойду до банов

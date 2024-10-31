@@ -7,7 +7,8 @@ export class GetAllPostsCommand {
         public limit: number, 
         public pageNumber: number,
         public sortBy: string,
-        public sortDirection: string,) {
+        public sortDirection: string,
+        public userId?: number) {
         
     }
 }
@@ -21,7 +22,7 @@ export class GetAllPostsUseCase {
         if (command.pageNumber && command.limit) {
             offset = (command.pageNumber - 1) * command.limit
         }
-        return this.postsRepository.allPosts(offset, command.limit, command.pageNumber, command.sortBy, command.sortDirection,)
+        return this.postsRepository.allPosts(offset, command.limit, command.pageNumber, command.sortBy, command.sortDirection, command.userId)
     }
 }
 
