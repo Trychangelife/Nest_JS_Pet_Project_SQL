@@ -144,20 +144,6 @@ const usersSuperAdminProviders = [SuperAdminUsersRepositorySql]
   //   envFilePath: '.env'
   // }),
 
-  //MongooseModule.forRoot(uri, options),
-  //MongooseModule.forFeature([
-    //{name: 'Blogs', schema: blogsSchema}, 
-    // {name: 'Posts', schema: postSchema}, 
-    // {name: 'Comments', schema: commentsSchema}, 
-    // {name: 'Users', schema: usersSchema}, 
-    // {name: 'RefreshToken', schema: refreshTokenSchema},
-    // {name: 'RegistrationData', schema: registrationDataSchema}, 
-    // {name: 'AuthData', schema: authDataSchema},
-    // {name: 'CodeConfirm', schema: codeConfirmSchema},
-    // {name: 'EmailSend', schema: emailSendSchema},
-    // {name: 'RecoveryPassword', schema: recoveryPasswordSchema},
-    // {name: 'NewPassword', schema: newPasswordSchema}
-  //]),
   JwtModule.register({
     secret: process.env.JWT_SECRET,
     signOptions: {
