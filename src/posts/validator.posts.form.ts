@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { registerDecorator, ValidationArguments, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from "class-validator";
-import { BlogsService } from 'src/blogs/application/blogs.service';
 import { GetTargetBlogCommand } from 'src/blogs/application/use-cases/get_target_blog';
 
 

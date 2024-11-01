@@ -1,9 +1,6 @@
-import { Injectable, Next } from "@nestjs/common"
-import { InjectModel } from "@nestjs/mongoose"
-import { Model } from "mongoose"
-import { RefreshTokenStorageType } from "../../utils/types"
-import { DataSource } from "typeorm"
+import { Injectable } from "@nestjs/common"
 import { InjectDataSource } from "@nestjs/typeorm"
+import { DataSource } from "typeorm"
 
 export const deviceView = {
     _id: 0,

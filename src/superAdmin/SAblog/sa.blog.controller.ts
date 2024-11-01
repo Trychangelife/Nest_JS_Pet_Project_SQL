@@ -1,23 +1,21 @@
 import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Query, UseFilters, UseGuards } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
-import { constructorPagination } from "src/utils/pagination.constructor";
-import { GetAllBlogsSuperAdminCommand } from "./application/use-cases/get_all_blogs";
-import { BasicAuthGuard } from "src/guards/basic_auth_guard";
-import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
-import { Blogs } from "src/blogs/dto/Blog_validator_type";
-import { BindingBlogSuperAdminCommand } from "./application/use-cases/binding_blog";
 import { GetTargetBlogCommand } from "src/blogs/application/use-cases/get_target_blog";
-import { BanStatus } from "./dto/banStatus";
+import { Blogs } from "src/blogs/dto/Blog_validator_type";
 import { BlogsTypeView } from "src/blogs/dto/BlogsType";
-import { CreateBlogCommand } from "./application/use-cases/create_blog";
-import { UpdateBlogCommand } from "./application/use-cases/update_blog";
-import { DeleteBlogCommand } from "./application/use-cases/delete_single_blog";
-import { PostTypeValidator } from "src/posts/dto/PostTypeValidator";
+import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
+import { BasicAuthGuard } from "src/guards/basic_auth_guard";
 import { CreatePostCommand } from "src/posts/application/use-cases/create_post";
-import { GetAllPostsSpecificBlogCommand } from "./application/use-cases/get_all_posts_specific_blog";
-import { UpdatePostCommand } from "src/posts/application/use-cases/update_post";
-import { PostsTypeView } from "src/posts/dto/PostsType";
 import { DeletePostCommand } from "src/posts/application/use-cases/delete_post";
+import { UpdatePostCommand } from "src/posts/application/use-cases/update_post";
+import { PostTypeValidator } from "src/posts/dto/PostTypeValidator";
+import { constructorPagination } from "src/utils/pagination.constructor";
+import { BindingBlogSuperAdminCommand } from "./application/use-cases/binding_blog";
+import { CreateBlogCommand } from "./application/use-cases/create_blog";
+import { DeleteBlogCommand } from "./application/use-cases/delete_single_blog";
+import { GetAllBlogsSuperAdminCommand } from "./application/use-cases/get_all_blogs";
+import { GetAllPostsSpecificBlogCommand } from "./application/use-cases/get_all_posts_specific_blog";
+import { UpdateBlogCommand } from "./application/use-cases/update_blog";
 
 @Controller('sa/blogs')
 export class SuperAdminBlogsController {

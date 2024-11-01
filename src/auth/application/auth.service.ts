@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common"
-import { AuthDataType, ConfirmedAttemptDataType, EmailSendDataType } from "src/utils/types"
 import { NewPasswordType, RecoveryPasswordType } from "src/auth/dto/RecoveryPasswordType"
 import { UsersType } from "src/users/dto/UsersType"
 import { UsersRepository } from "src/users/repositories/users.repository"
+import { EmailSendDataType } from "src/utils/types"
 import { uuid } from "uuidv4"
 
 

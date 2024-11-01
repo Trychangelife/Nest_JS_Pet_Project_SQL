@@ -3,7 +3,6 @@ import { JwtAuthGuard } from "src/guards/jwt-auth.guard";
 import { JwtServiceClass } from "src/guards/jwt.service";
 import { CommentsService } from "./application/comments.service";
 import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
-import { LikesDTO } from "src/utils/class-validator.form";
 import { Comment } from "src/comments/dto/Comment_validator_type";
 import { HttpExceptionFilterForLikes } from "src/exception_filters/exception_likes";
 import { CommandBus } from "@nestjs/cqrs";

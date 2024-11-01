@@ -1,13 +1,9 @@
 import { CommandHandler } from "@nestjs/cqrs"
-import { InjectModel } from "@nestjs/mongoose"
-import { InjectDataSource } from "@nestjs/typeorm"
-import { Model } from "mongoose"
-import { BlogsType, BlogsTypeView } from "src/blogs/dto/BlogsType"
+import { BlogsType } from "src/blogs/dto/BlogsType"
 import { BlogsRepositorySql } from "src/blogs/repositories/blogs.sql.repository"
 import { PostClass } from "src/posts/dto/PostClass"
 import { PostsRepositorySql } from "src/posts/repositories/posts.sql.repository"
 import { LIKES } from "src/utils/types"
-import { DataSource } from "typeorm"
 import { v4 as uuidv4 } from "uuid"
 
 

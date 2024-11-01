@@ -1,23 +1,12 @@
-import { BadRequestException, Injectable, Ip, Request, UseFilters, UseGuards } from "@nestjs/common";
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Query } from "@nestjs/common";
-import { IsEmail, IsString, MaxLength, MinLength } from "class-validator";
-import { constructorPagination } from "src/utils/pagination.constructor";
-import { UsersType } from "src/users/dto/UsersType";
-import { UsersService } from "./application/users.service";
-import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
-import { UserRegistrationFlow } from "src/guards/users.registration.guard";
+import { BadRequestException, Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Query, Request, UseFilters, UseGuards } from "@nestjs/common";
 import { AuthForm } from "src/auth/dto/AuthForm_validator";
+import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
 import { BasicAuthGuard } from "src/guards/basic_auth_guard";
+import { UserRegistrationFlow } from "src/guards/users.registration.guard";
+import { UsersType } from "src/users/dto/UsersType";
+import { constructorPagination } from "src/utils/pagination.constructor";
+import { UsersService } from "./application/users.service";
 
-class CreateUser {
-  @IsEmail()
-  email: string
-  @MinLength(5)
-  @MaxLength(10)
-  login: string
-  @MinLength(3)
-  password: string
-}
 
 @Controller('users')
 export class UsersController {

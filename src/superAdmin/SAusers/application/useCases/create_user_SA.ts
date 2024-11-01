@@ -1,13 +1,13 @@
 import { CommandHandler } from "@nestjs/cqrs"
-import { EmailService } from "src/email/email.service"
-import { UsersType, userViewModel } from "src/users/dto/UsersType"
-import { RegistrationDataType } from "src/utils/types"
 import * as bcrypt from "bcrypt"
 import { ObjectId } from "mongodb"
+import { EmailService } from "src/email/email.service"
+import { UserAlreadyExistsException } from "src/exception_filters/UserException"
 import { User } from "src/users/dto/UserClass"
+import { userViewModel } from "src/users/dto/UsersType"
+import { RegistrationDataType } from "src/utils/types"
 import { v4 as uuidv4 } from "uuid"
 import { SuperAdminUsersRepositorySql } from "../../repositories/SuperAdmin.user.repositorySQL"
-import { UserAlreadyExistsException } from "src/exception_filters/UserException"
 
 export class CreateUserSACommand {
     constructor(

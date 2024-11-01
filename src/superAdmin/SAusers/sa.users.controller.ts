@@ -1,20 +1,18 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Query, Request, Res, UseFilters, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Query, Request, Res, UseFilters, UseGuards } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
+import { InjectDataSource } from "@nestjs/typeorm";
 import { AuthForm } from "src/auth/dto/AuthForm_validator";
 import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
 import { BasicAuthGuard } from "src/guards/basic_auth_guard";
 import { UserRegistrationFlow } from "src/guards/users.registration.guard";
-import { UsersType } from "src/users/dto/UsersType";
-import { CreateUserSACommand } from "./application/useCases/create_user_SA";
 import { constructorPagination } from "src/utils/pagination.constructor";
-import { GetAllUsersAsSuperAdminCommand } from "./application/useCases/get_all_user_SA";
-import { DeleteUserAsSuperAdminCommand } from "./application/useCases/delete_user_SA";
-import { BanUserAsSuperAdminCommand } from "./application/useCases/ban_user_SA";
-import { BanUserInputModel } from "./dto/banUserInputModel";
-import { BanStatus } from "../SAblog/dto/banStatus";
 import { DataSource } from "typeorm";
-import { InjectDataSource } from "@nestjs/typeorm";
-import { RateLimitGuard } from "src/guards/rate-limit.guard";
+import { BanStatus } from "../SAblog/dto/banStatus";
+import { BanUserAsSuperAdminCommand } from "./application/useCases/ban_user_SA";
+import { CreateUserSACommand } from "./application/useCases/create_user_SA";
+import { DeleteUserAsSuperAdminCommand } from "./application/useCases/delete_user_SA";
+import { GetAllUsersAsSuperAdminCommand } from "./application/useCases/get_all_user_SA";
+import { BanUserInputModel } from "./dto/banUserInputModel";
 
 @Controller('sa/users')
 export class SuperAdminUsersController {

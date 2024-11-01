@@ -1,27 +1,23 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseEnumPipe, Post, Put, Query, Req, Res, UseFilters, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, HttpException, HttpStatus, Param, ParseEnumPipe, Post, Put, Query, Req, Res, UseFilters, UseGuards } from "@nestjs/common";
+import { CommandBus } from "@nestjs/cqrs";
+import { Comment } from "src/comments/dto/Comment_validator_type";
+import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
 import { BasicAuthGuard } from "src/guards/basic_auth_guard";
 import { JwtAuthGuard } from "src/guards/jwt-auth.guard";
+import { JwtFakeAuthGuard } from "src/guards/jwt-fake-auth.guard";
 import { JwtServiceClass } from "src/guards/jwt.service";
+import { PostTypeValidatorForCreate } from "src/posts/dto/PostTypeValidator";
 import { constructorPagination } from "src/utils/pagination.constructor";
 import { LIKES } from "src/utils/types";
 import { PostsService } from "./application/posts.service";
-import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
-import { Comment } from "src/comments/dto/Comment_validator_type";
-import { PostTypeValidatorForCreate } from "src/posts/dto/PostTypeValidator";
-import { CommandBus } from "@nestjs/cqrs";
-import { GetAllPostsCommand, GetAllPostsUseCase } from "./application/use-cases/get_all_posts";
-import { GetSinglePostCommand } from "./application/use-cases/get_single_post";
-import { CreatePostCommand } from "./application/use-cases/create_post";
-import { UpdatePostCommand } from "./application/use-cases/update_post";
-import { DeletePostCommand } from "./application/use-cases/delete_post";
 import { CreateCommentForSpecificPostCommand } from "./application/use-cases/create_comment_for_specific_post";
+import { CreatePostCommand } from "./application/use-cases/create_post";
+import { GetAllPostsCommand } from "./application/use-cases/get_all_posts";
 import { GetCommentByPostIdCommand } from "./application/use-cases/get_comments_by_postID";
+import { GetSinglePostCommand } from "./application/use-cases/get_single_post";
 import { LikeDislikeForPostCommand } from "./application/use-cases/like_dislike_for_post";
-import { CheckBanStatusSuperAdminCommand } from "src/superAdmin/SAusers/application/useCases/check_banStatus";
+import { UpdatePostCommand } from "./application/use-cases/update_post";
 import { PostsType } from "./dto/PostsType";
-import { CheckForbiddenCommand } from "./application/use-cases/check_forbidden";
-import { GetAllPostsSpecificBlogCommand } from "src/superAdmin/SAblog/application/use-cases/get_all_posts_specific_blog";
-import { JwtFakeAuthGuard } from "src/guards/jwt-fake-auth.guard";
 
 @Controller('posts')
 export class PostController {
@@ -32,21 +28,6 @@ export class PostController {
         private commandBus: CommandBus,
     ) {
     }
-    // TASK - Pagination doesn't work, need to be fixed
-    // @Get()
-    // async getAllPosts(@Query() query: { searchNameTerm: string, pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }, @Req() req) {
-    //     try {
-    //         const token = req.headers.authorization.split(' ')[1]
-    //         const userId = await this.jwtServiceClass.getUserByAccessToken(token)
-    //         const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
-    //         const getAllPosts: object = await this.commandBus.execute(new GetAllPostsCommand(paginationData.pageSize, paginationData.pageNumber, userId));
-    //         return getAllPosts;
-    //     } catch (error) {
-    //         const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
-    //         const getAllPosts: object = await this.commandBus.execute(new GetAllPostsCommand(paginationData.pageSize, paginationData.pageNumber));
-    //         return getAllPosts;
-    //     }
-    // }
     @UseGuards(JwtFakeAuthGuard)
     @Get()
     async getAllPost(@Query() query: { pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }, @Req() req) {
@@ -103,18 +84,6 @@ export class PostController {
         }
 
     }
-    // @UseGuards(BasicAuthGuard)
-    // @Delete(':id')
-    // async deletePostById(@Param() params, @Res() res) {
-    //     const deleteObj: boolean = await this.commandBus.execute(new DeletePostCommand(params.id));
-    //     if (deleteObj === true) {
-    //         //return HttpStatus.NO_CONTENT
-    //         throw new HttpException('Post was DELETED', HttpStatus.NO_CONTENT)
-    //     }
-    //     else {
-    //         throw new HttpException('Post NOT FOUND', HttpStatus.NOT_FOUND)
-    //     }
-    // }
 
     @UseGuards(JwtAuthGuard)
     @UseFilters(new HttpExceptionFilter())

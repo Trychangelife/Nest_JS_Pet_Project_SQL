@@ -1,11 +1,9 @@
-import { Injectable, Next } from "@nestjs/common"
+import { Injectable } from "@nestjs/common"
 import { InjectDataSource } from "@nestjs/typeorm"
 import { BlogsType } from "src/blogs/dto/BlogsType"
-import { Comments } from "src/comments/dto/CommentsClass"
 import { CommentsType, CommentsTypeView } from "src/comments/dto/CommentsType"
 import { PostsType, PostsTypeView } from "src/posts/dto/PostsType"
 import { LIKES } from "src/utils/types"
-import { post } from "typegoose"
 import { DataSource } from "typeorm"
 
 export const postViewModel = {
@@ -35,14 +33,14 @@ export class PostsRepositorySql {
 
     }
     async allPosts(
-        offset: number = 0, 
-        limit: number = 10, 
-        pageNumber: number = 1, 
+        offset: number = 0,
+        limit: number = 10,
+        pageNumber: number = 1,
         sortBy: string = 'created_at',
         sortDirection: string = 'desc',
-        userId?: number 
+        userId?: number
     ): Promise<object> {
-    
+
         // Объект для сопоставления значений сортировки с фактическими именами столбцов
         const sortFieldMap = {
             title: 'title',
@@ -50,18 +48,18 @@ export class PostsRepositorySql {
             blog_id: 'blog_id',
             blogName: 'blog_name'
         };
-    
+
         // Список допустимых направлений сортировки
         const allowedSortDirections = ['asc', 'desc'];
-    
+
         // Проверка значений sortBy и sortDirection
         const sortField = sortFieldMap[sortBy] || 'created_at';
         const order = allowedSortDirections.includes(sortDirection.toLowerCase()) ? sortDirection.toUpperCase() : 'DESC';
-    
+
         // Получаем общее количество постов
         const [{ count: totalCount }] = await this.dataSource.query(`SELECT COUNT(*)::int AS count FROM "posts"`);
         const pagesCount = Math.ceil(totalCount / limit);
-    
+
         // Основной запрос на получение постов с лайками и дизлайками
         const getAllPosts = await this.dataSource.query(
             `
@@ -115,7 +113,7 @@ export class PostsRepositorySql {
             `,
             [limit, offset, userId]
         );
-    
+
         // Форматируем вывод
         return {
             pagesCount,
@@ -143,7 +141,7 @@ export class PostsRepositorySql {
             }))
         };
     }
-    
+
     async releasePost(newPosts: PostsType, foundBlog: BlogsType): Promise<PostsTypeView | null> {
 
         const postAfterCreated: PostsType = await this.dataSource.query(`
@@ -274,7 +272,7 @@ export class PostsRepositorySql {
                 `,
                 [postId, userId]
             );
-    
+
             // Проверка, найден ли пост
             if (post) {
                 const postViewModel: PostsTypeView = {
@@ -305,7 +303,7 @@ export class PostsRepositorySql {
             return null;
         }
     }
-    
+
 
     async deletePost(deletePostId: string, blogId: string): Promise<boolean> {
         const findPostBeforeDelete = await this.dataSource.query(`SELECT * FROM "posts" WHERE id = $1 AND blog_id = $2`, [deletePostId, blogId])
@@ -325,37 +323,37 @@ export class PostsRepositorySql {
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
     `, [createdComment.content,
-        createdComment.commentatorInfo.userId,
-        createdComment.commentatorInfo.userLogin,
-        createdComment.createdAt,
-        createdComment.postId,])
+            createdComment.commentatorInfo.userId,
+            createdComment.commentatorInfo.userLogin,
+            createdComment.createdAt,
+            createdComment.postId,])
 
 
-        const commentViewModel: CommentsTypeView = {
-            id: commentAfterCreated[0].id.toString(),
-            content: commentAfterCreated[0].content,
-            commentatorInfo: {
-                userId: commentAfterCreated[0].author_user_id.toString(),
-                userLogin: commentAfterCreated[0].author_login_id
-            },
-            createdAt: commentAfterCreated[0].created_at,
-            likesInfo: {
-                likesCount: 0,
-                dislikesCount: 0,
-                myStatus: LIKES.NONE,
+            const commentViewModel: CommentsTypeView = {
+                id: commentAfterCreated[0].id.toString(),
+                content: commentAfterCreated[0].content,
+                commentatorInfo: {
+                    userId: commentAfterCreated[0].author_user_id.toString(),
+                    userLogin: commentAfterCreated[0].author_login_id
+                },
+                createdAt: commentAfterCreated[0].created_at,
+                likesInfo: {
+                    likesCount: 0,
+                    dislikesCount: 0,
+                    myStatus: LIKES.NONE,
+                }
             }
-        }
-        if (commentViewModel !== null) {
-            return commentViewModel
-        }
-        else {
-            return null
-        }
+            if (commentViewModel !== null) {
+                return commentViewModel
+            }
+            else {
+                return null
+            }
         } catch (error) {
             return null
         }
 
-        
+
     }
 
     async takeCommentByIdPost(
@@ -367,7 +365,7 @@ export class PostsRepositorySql {
         sortDirection: string = 'desc',
         userId?: number,
     ): Promise<object | boolean> {
-    
+
         // Объект для сопоставления значений сортировки с фактическими именами столбцов
         const sortFieldMap = {
             userId: 'author_user_id',
@@ -375,18 +373,18 @@ export class PostsRepositorySql {
             blog_id: 'blog_id',
             blogName: 'blog_name'
         };
-    
+
         const allowedSortDirections = ['asc', 'desc'];
         const sortField = sortFieldMap[sortBy] || 'created_at';
         const order = allowedSortDirections.includes(sortDirection.toLowerCase()) ? sortDirection.toUpperCase() : 'DESC';
-    
+
         // Получаем общее количество комментариев для поста
         const [totalCountResult] = await this.dataSource.query(
             `SELECT COUNT(*)::int AS count FROM "comments" WHERE post_id = $1`, [postId]
         );
         const totalCount = parseInt(totalCountResult.count, 10);
         const pagesCount = Math.ceil(totalCount / limit);
-    
+
         // Основной запрос для получения комментариев
         const getAllComments = await this.dataSource.query(
             `
@@ -434,7 +432,7 @@ export class PostsRepositorySql {
         if (getAllComments.length === 0) {
             return false
         }
-    
+
         // Возвращаем форматированный объект
         return {
             pagesCount,
@@ -457,8 +455,8 @@ export class PostsRepositorySql {
             }))
         };
     }
-    
-    
+
+
 
 
     async likeDislikeForPost(

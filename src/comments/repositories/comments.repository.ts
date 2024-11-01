@@ -1,11 +1,7 @@
 import { Injectable } from "@nestjs/common"
-import { InjectModel } from "@nestjs/mongoose"
-import { Model } from "mongoose"
-import { LikesDTO } from "src/utils/class-validator.form"
-import { LIKES } from "src/utils/types"
-import { UsersType } from "src/users/dto/UsersType"
-import { CommentsType, CommentsTypeView } from "src/comments/dto/CommentsType"
 import { InjectDataSource } from "@nestjs/typeorm"
+import { CommentsTypeView } from "src/comments/dto/CommentsType"
+import { LIKES } from "src/utils/types"
 import { DataSource } from "typeorm"
 
 @Injectable()

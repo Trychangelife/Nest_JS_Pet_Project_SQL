@@ -1,8 +1,6 @@
 import { Injectable } from "@nestjs/common"
 import { InjectDataSource } from "@nestjs/typeorm"
 import { BlogsType, BlogsTypeView } from "src/blogs/dto/BlogsType"
-import { postSchema } from "src/db";
-import { LIKES } from "src/utils/types";
 import { DataSource } from "typeorm"
 
 

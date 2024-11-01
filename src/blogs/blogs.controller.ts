@@ -1,24 +1,11 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, Req, Res, UseFilters, UseGuards } from "@nestjs/common";
-import { Model } from "mongoose";
+import { Controller, Get, HttpException, HttpStatus, Param, Query, Req, UseGuards } from "@nestjs/common";
+import { CommandBus } from "@nestjs/cqrs";
+import { JwtFakeAuthGuard } from "src/guards/jwt-fake-auth.guard";
 import { JwtServiceClass } from "src/guards/jwt.service";
-import { PostsService } from "src/posts/application/posts.service";
-import { BlogsService } from "./application/blogs.service";
-import { BasicAuthGuard } from "src/guards/basic_auth_guard";
+import { GetAllPostsSpecificBlogCommand } from "src/superAdmin/SAblog/application/use-cases/get_all_posts_specific_blog";
 import { constructorPagination } from "src/utils/pagination.constructor";
-import { PostsType } from "src/posts/dto/PostsType";
-import { BlogsType, BlogsTypeView } from "src/blogs/dto/BlogsType";
-import { PostTypeValidator } from "src/posts/dto/PostTypeValidator";
-import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
-import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { GetAllBlogsCommand } from "./application/use-cases/get_all_blogs";
 import { GetTargetBlogCommand } from "./application/use-cases/get_target_blog";
-import { CreateBlogCommand } from "../superAdmin/SAblog/application/use-cases/create_blog";
-import { UpdateBlogCommand } from "../superAdmin/SAblog/application/use-cases/update_blog";
-import { DeleteBlogCommand } from "../superAdmin/SAblog/application/use-cases/delete_single_blog";
-import { Blogs } from "src/blogs/dto/Blog_validator_type";
-import { GetAllPostsSpecificBlogCommand } from "src/superAdmin/SAblog/application/use-cases/get_all_posts_specific_blog";
-import { CreatePostCommand } from "src/posts/application/use-cases/create_post";
-import { JwtFakeAuthGuard } from "src/guards/jwt-fake-auth.guard";
 
 @Controller('blogs')
 export class BlogsController {
