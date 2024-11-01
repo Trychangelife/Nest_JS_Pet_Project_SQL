@@ -129,13 +129,14 @@ export class PostController {
         }
 
     }
+    @UseGuards(JwtFakeAuthGuard)
     @Get(':postId/comments')
     async getCommentsByPostId(@Query() query: { searchNameTerm: string, pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }, @Param() params, @Req() req) {
-
+            const userId = req?.user?.id ?? null;
             //const token = req.headers.authorization.split(' ')[1]
             //const userId = await this.jwtServiceClass.getUserByAccessToken(token)
             const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
-            const newComment = await this.commandBus.execute(new GetCommentByPostIdCommand(params.postId, paginationData.pageNumber, paginationData.pageSize, paginationData.sortBy, paginationData.sortDirection));
+            const newComment = await this.commandBus.execute(new GetCommentByPostIdCommand(params.postId, paginationData.pageNumber, paginationData.pageSize, paginationData.sortBy, paginationData.sortDirection, userId));
             if (newComment) {
                 return newComment
             }

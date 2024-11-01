@@ -7,7 +7,8 @@ export class GetCommentByPostIdCommand {
         public page: number, 
         public pageSize: number,  
         public sortBy?: string, 
-        public sortDirection?: string) {
+        public sortDirection?: string,
+        public userId?: number) {
 
     }
 }
@@ -21,7 +22,7 @@ export class GetCommentByPostIdUseCase {
         if (command.page && command.pageSize) {
             skip = (command.page - 1) * command.pageSize
         }
-        return await this.postsRepository.takeCommentByIdPost(command.postId, skip, command.pageSize, command.page, command.sortBy, command.sortDirection)
+        return await this.postsRepository.takeCommentByIdPost(command.postId, skip, command.pageSize, command.page, command.sortBy, command.sortDirection, command.userId)
     }
 }
 

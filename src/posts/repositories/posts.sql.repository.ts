@@ -358,7 +358,8 @@ export class PostsRepositorySql {
         limit: number = 10,
         pageNumber: number = 1,
         sortBy: string = 'created_at',
-        sortDirection: string = 'desc'
+        sortDirection: string = 'desc',
+        userId?: number,
     ): Promise<object | boolean> {
     
         // Объект для сопоставления значений сортировки с фактическими именами столбцов
@@ -391,7 +392,17 @@ export class PostsRepositorySql {
                 c.created_at AS "createdAt",
                 COALESCE(cl.likes_count, 0) AS "likesCount",
                 COALESCE(cd.dislikes_count, 0) AS "dislikesCount",
-                'None' AS "myStatus" -- Всегда "None" так как userId не передается
+                CASE 
+                WHEN CAST($4 AS integer) IS NOT NULL AND EXISTS (
+                    SELECT 1 FROM "comments_like_storage" cls 
+                    WHERE cls.comment_id = c.id AND cls.user_id = $4
+                ) THEN 'Like'
+                WHEN CAST($4 AS integer) IS NOT NULL AND EXISTS (
+                    SELECT 1 FROM "comments_dislike_storage" cds 
+                    WHERE cds.comment_id = c.id AND cds.user_id = $4
+                ) THEN 'Dislike'
+                ELSE 'None'
+                END AS "myStatus"
             FROM "comments" c
             LEFT JOIN ( -- Вычисляем кол-во лайков
                 SELECT 
@@ -411,7 +422,7 @@ export class PostsRepositorySql {
             ORDER BY ${sortField} ${order}
             LIMIT $1 OFFSET $2
             `,
-            [limit, offset, postId]
+            [limit, offset, postId, userId]
         );
     
         // Возвращаем форматированный объект
@@ -431,7 +442,7 @@ export class PostsRepositorySql {
                 likesInfo: {
                     likesCount: Number(e.likesCount),
                     dislikesCount: Number(e.dislikesCount),
-                    myStatus: 'None' // Всегда "None" для обезличенных запросов
+                    myStatus: e.myStatus // Всегда "None" для обезличенных запросов
                 },
             }))
         };
