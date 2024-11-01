@@ -1,12 +1,10 @@
-import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
 import { Injectable } from "@nestjs/common";
-import { PayloadType, RefreshTokenStorageType } from "src/utils/types";
-import { UsersType } from "src/users/dto/UsersType";
-import { uuid } from "uuidv4";
 import { JwtService } from "@nestjs/jwt";
-import { DataSource } from "typeorm";
 import { InjectDataSource } from "@nestjs/typeorm";
+import { UsersType } from "src/users/dto/UsersType";
+import { PayloadType, RefreshTokenStorageType } from "src/utils/types";
+import { DataSource } from "typeorm";
+import { uuid } from "uuidv4";
 
 @Injectable()
 export class JwtServiceClass {
@@ -14,44 +12,44 @@ export class JwtServiceClass {
     constructor(
         @InjectDataSource() protected dataSource: DataSource,
         protected jwtService: JwtService
-    ) {}
+    ) { }
 
     async accessToken(user: UsersType) {
         return this.jwtService.sign(
-            { id: user.id }, 
+            { id: user.id },
             { secret: process.env.JWT_SECRET, expiresIn: '10m' }
         );
     }
-    
+
     // Только для выпуска первого токена
     async getFirstRefreshToken(user: UsersType, ip: string, titleDevice: string): Promise<string> {
-        
-      // Регистрируем новое устройство и токен
-      const deviceId = uuid();
-      const refreshToken = this.jwtService.sign(
-          { id: user.id, deviceId: deviceId },
-          { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20m' }
-      );
 
-      const newRefreshTokenForStorage: RefreshTokenStorageType = {
-          userId: user.id,
-          refreshToken: refreshToken,
-          ip: ip,
-          title: titleDevice,
-          lastActiveDate: new Date(),
-          deviceId: deviceId
-      };
+        // Регистрируем новое устройство и токен
+        const deviceId = uuid();
+        const refreshToken = this.jwtService.sign(
+            { id: user.id, deviceId: deviceId },
+            { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20m' }
+        );
 
-      await this.dataSource.query(`
+        const newRefreshTokenForStorage: RefreshTokenStorageType = {
+            userId: user.id,
+            refreshToken: refreshToken,
+            ip: ip,
+            title: titleDevice,
+            lastActiveDate: new Date(),
+            deviceId: deviceId
+        };
+
+        await this.dataSource.query(`
           INSERT INTO refresh_token_storage 
           (user_id, refresh_token, ip, title, device_id, last_activate_date)
           VALUES ($1, $2, $3, $4, $5, $6)
       `, [newRefreshTokenForStorage.userId, newRefreshTokenForStorage.refreshToken, newRefreshTokenForStorage.ip, newRefreshTokenForStorage.title, newRefreshTokenForStorage.deviceId, newRefreshTokenForStorage.lastActiveDate]);
 
-      return refreshToken;
+        return refreshToken;
     }
     //
-    async refreshToken(user: UsersType, ip: string, titleDevice: string, device_id: string ,rToken: string): Promise<string> {
+    async refreshToken(user: UsersType, ip: string, titleDevice: string, device_id: string, rToken: string): Promise<string> {
 
         // Проверяем наличие устройства для пользователя
         const [checkDeviceId] = await this.dataSource.query(`
@@ -104,7 +102,7 @@ export class JwtServiceClass {
             try {
                 const result = this.jwtService.verify(checkToken.refresh_token, { secret: process.env.JWT_REFRESH_SECRET });
                 const newAccessToken = await this.accessToken(result);
-                const newRefreshToken = await this.refreshToken(result, ip, titleDevice, checkToken.device_id ,rToken);
+                const newRefreshToken = await this.refreshToken(result, ip, titleDevice, checkToken.device_id, rToken);
 
                 return { newAccessToken, newRefreshToken };
             } catch (error) {
@@ -120,12 +118,12 @@ export class JwtServiceClass {
                 SELECT refresh_token FROM refresh_token_storage
                 WHERE refresh_token = $1
             `, [rToken]);
-    
+
             // Проверяем, если результат пустой, возвращаем null
             if (result.length === 0) {
                 return null;
             }
-    
+
             // Если есть данные, возвращаем первую строку
             return result[0];
         } catch (error) {
@@ -144,7 +142,7 @@ export class JwtServiceClass {
             console.error("Error deleting token:", error);
         }
     }
-    
+
 
     async checkRefreshToken(refreshToken: string): Promise<boolean | object> {
         try {

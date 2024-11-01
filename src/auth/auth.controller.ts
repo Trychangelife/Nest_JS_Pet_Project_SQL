@@ -1,21 +1,18 @@
-import { EmailService } from "src/email/email.service";
-import { UsersRepository } from "src/users/repositories/users.repository";
-import { UsersService } from "src/users/application/users.service";
-import { AuthService } from "./application/auth.service";
-import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, Req, Request, Res, UseFilters, UseGuards, UsePipes, ValidationPipe } from "@nestjs/common";
-import { RefreshTokenStorageType } from "src/utils/types";
-import { UsersType } from "src/users/dto/UsersType";
-import { JwtServiceClass } from "src/guards/jwt.service";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
-import { JwtAuthGuard } from "src/guards/jwt-auth.guard";
-import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
-import { UserRegistrationFlow } from "src/guards/users.registration.guard";
+import { Body, Controller, Get, HttpException, HttpStatus, Post, Req, Request, Res, UseFilters, UseGuards } from "@nestjs/common";
 import { AuthForm } from "src/auth/dto/AuthForm_validator";
+import { EmailService } from "src/email/email.service";
+import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
+import { JwtAuthGuard } from "src/guards/jwt-auth.guard";
+import { JwtServiceClass } from "src/guards/jwt.service";
+import { RateLimitGuard } from "src/guards/rate-limit.guard";
+import { UserRegistrationFlow } from "src/guards/users.registration.guard";
+import { UsersService } from "src/users/application/users.service";
+import { UsersType } from "src/users/dto/UsersType";
+import { UsersRepository } from "src/users/repositories/users.repository";
+import { isUuid } from "uuidv4";
+import { AuthService } from "./application/auth.service";
 import { EmailForRecoveryPassword } from "./dto/EmailForRecoveryPassword_Validator";
 import { NewPassword } from "./dto/NewPassword_Validator";
-import { isUuid } from "uuidv4";
-import { RateLimitGuard } from "src/guards/rate-limit.guard";
 
 
 @Controller('auth')

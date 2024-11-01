@@ -1,14 +1,14 @@
 import { Module } from "@nestjs/common";
-import { UsersRepository } from "src/users/repositories/users.repository";
-import { AuthController } from "./auth.controller";
-import { AuthService } from "./application/auth.service";
+import { JwtModule } from "@nestjs/jwt";
 import { MongooseModule } from "@nestjs/mongoose";
-import { UsersService } from "src/users/application/users.service";
+import { EmailAdapter } from "src/email/email.adapter";
+import { EmailManager } from "src/email/email.manager";
 import { EmailService } from "src/email/email.service";
 import { JwtServiceClass } from "src/guards/jwt.service";
-import { JwtModule, JwtService } from "@nestjs/jwt"
-import { EmailManager } from "src/email/email.manager";
-import { EmailAdapter } from "src/email/email.adapter";
+import { UsersService } from "src/users/application/users.service";
+import { UsersRepository } from "src/users/repositories/users.repository";
+import { AuthService } from "./application/auth.service";
+import { AuthController } from "./auth.controller";
 
 @Module({
     imports: [MongooseModule.forFeature([

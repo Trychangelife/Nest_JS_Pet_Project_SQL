@@ -1,9 +1,9 @@
 require('dotenv').config({ path: `../${process.env.NODE_ENV}.env` })
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import  cookieParser from 'cookie-parser';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
-import { useContainer } from 'class-validator'
+import { NestFactory } from '@nestjs/core';
+import { useContainer } from 'class-validator';
+import cookieParser from 'cookie-parser';
+import { AppModule } from './app.module';
 
 
 
