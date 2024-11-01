@@ -35,7 +35,6 @@ export type ConfirmedAttemptDataType = {
 }
 export type RefreshTokenStorageType = {
     userId: string
-    refreshToken: string
     ip: string
     title: string
     deviceId: string

@@ -33,7 +33,6 @@ export class JwtServiceClass {
 
         const newRefreshTokenForStorage: RefreshTokenStorageType = {
             userId: user.id,
-            refreshToken: refreshToken,
             ip: ip,
             title: titleDevice,
             lastActiveDate: new Date(),
@@ -42,9 +41,9 @@ export class JwtServiceClass {
 
         await this.dataSource.query(`
           INSERT INTO refresh_token_storage 
-          (user_id, refresh_token, ip, title, device_id, last_activate_date)
-          VALUES ($1, $2, $3, $4, $5, $6)
-      `, [newRefreshTokenForStorage.userId, newRefreshTokenForStorage.refreshToken, newRefreshTokenForStorage.ip, newRefreshTokenForStorage.title, newRefreshTokenForStorage.deviceId, newRefreshTokenForStorage.lastActiveDate]);
+          (user_id, ip, title, device_id, last_activate_date)
+          VALUES ($1, $2, $3, $4, $5)
+      `, [newRefreshTokenForStorage.userId, newRefreshTokenForStorage.ip, newRefreshTokenForStorage.title, newRefreshTokenForStorage.deviceId, newRefreshTokenForStorage.lastActiveDate]);
 
         return refreshToken;
     }
@@ -67,9 +66,9 @@ export class JwtServiceClass {
 
             await this.dataSource.query(`
                 UPDATE refresh_token_storage
-                SET last_activate_date=$1, refresh_token=$2
-                WHERE user_id=$3 AND device_id=$4
-            `, [new Date(), refreshToken, user.id, deviceId]);
+                SET last_activate_date=$1
+                WHERE user_id=$2 AND device_id=$3
+            `, [new Date(), user.id, deviceId]);
             return refreshToken;
         }
     }
@@ -93,10 +92,13 @@ export class JwtServiceClass {
     }
 
     async getNewAccessToken(rToken: string, ip: string, titleDevice: string): Promise<object | null> {
+
+        const payloadToken = await this.getJwtPayload(rToken)
+        
         const [checkToken] = await this.dataSource.query(`
             SELECT * FROM refresh_token_storage
-            WHERE refresh_token = $1
-        `, [rToken]);
+            WHERE device_id = $1
+        `, [payloadToken.deviceId]);
         //Если приходит undefined - значит токена в базе уже нет, возможно сделали logout, тогда пусть идут входят в систему.
         if (checkToken !== undefined) {
             try {
@@ -113,11 +115,13 @@ export class JwtServiceClass {
     }
 
     async findTokenInData(rToken: string): Promise<any> {
+
         try {
+            const payloadToken = await this.getJwtPayload(rToken)
             const result = await this.dataSource.query(`
-                SELECT refresh_token FROM refresh_token_storage
-                WHERE refresh_token = $1
-            `, [rToken]);
+                SELECT device_id FROM refresh_token_storage
+                WHERE device_id = $1
+            `, [payloadToken.deviceId]);
 
             // Проверяем, если результат пустой, возвращаем null
             if (result.length === 0) {
@@ -133,10 +137,11 @@ export class JwtServiceClass {
 
     async deleteTokenFromData(rToken: string): Promise<void> {
         try {
+            const payloadToken = await this.getJwtPayload(rToken)
             await this.dataSource.query(`
                 DELETE FROM refresh_token_storage
-                WHERE refresh_token = $1
-            `, [rToken]);
+                WHERE device_id = $1
+            `, [payloadToken.deviceId]);
         } catch (error) {
             // Можно добавить обработку ошибок, если это нужно
             console.error("Error deleting token:", error);
