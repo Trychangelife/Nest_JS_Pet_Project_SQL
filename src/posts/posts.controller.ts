@@ -137,7 +137,7 @@ export class PostController {
             //const userId = await this.jwtServiceClass.getUserByAccessToken(token)
             const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
             const newComment = await this.commandBus.execute(new GetCommentByPostIdCommand(params.postId, paginationData.pageNumber, paginationData.pageSize, paginationData.sortBy, paginationData.sortDirection, userId));
-            if (newComment && newComment.length > 0) {
+            if (newComment) {
                 return newComment
             }
             else {
