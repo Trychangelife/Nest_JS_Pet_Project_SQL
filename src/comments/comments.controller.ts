@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Put, Req, Res, UseFilters, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, ParseEnumPipe, Put, Req, Res, UseFilters, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "src/guards/jwt-auth.guard";
 import { JwtServiceClass } from "src/guards/jwt.service";
 import { CommentsService } from "./application/comments.service";
@@ -91,7 +91,17 @@ export class CommentsController {
     @UseGuards(JwtAuthGuard)
     @UseFilters(new HttpExceptionFilterForLikes())
     @Put(':commentId/like-status')
-    async like_dislike(@Param() params, @Body() likeStatus: LIKES, @Req() req, @Res() res) {
+    async like_dislike(@Param() params,@Body('likeStatus', new ParseEnumPipe(LIKES, {
+        errorHttpStatusCode: HttpStatus.BAD_REQUEST,
+        exceptionFactory: error => {
+            throw new BadRequestException({
+                errorsMessages: [{
+                    message: error,
+                    field: "likeStatus"
+                }]
+            })
+        }
+    })) likeStatus: LIKES, @Req() req, @Res() res) {
         const like_dislike: object | string = await this.commandBus.execute(new LikeDislikeCommentCommand(params.commentId, likeStatus, req.user!.id, req.user!.login));
         if (like_dislike !== "404" && like_dislike !== '400') {
             throw new HttpException(like_dislike,HttpStatus.NO_CONTENT)

@@ -209,7 +209,7 @@ export class CommentsRepository {
                 [userId, commentId]
             );
             // LIKE статус
-            if (currentLikeStatus === "Like") {
+            if (likeStatus === "Like") {
 
                 if (checkOnDislike.length > 0) {
                     // Удаляем дизлайк
@@ -230,7 +230,7 @@ export class CommentsRepository {
             }
 
             // DISLIKE статус
-            if (currentLikeStatus === "Dislike") {
+            if (likeStatus === "Dislike") {
 
                 if (checkOnLike.length > 0) {
                     // Удаляем дизлайк
@@ -251,7 +251,7 @@ export class CommentsRepository {
             }
 
             // NONE статус
-            if (currentLikeStatus === "None") {
+            if (likeStatus === "None") {
 
                 if (checkOnLike.length > 0) {
                     await queryRunner.query(
