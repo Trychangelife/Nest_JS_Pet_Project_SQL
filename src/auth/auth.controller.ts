@@ -117,7 +117,6 @@ export class AuthController {
             const errorResponseForConfirmAccount = { errorsMessages: [{ message: 'account already confirmed', field: "code", }] }
                 throw new HttpException(errorResponseForConfirmAccount, HttpStatus.BAD_REQUEST)
         }
-        await this.authService.informationAboutConfirmed(req.ip, body.code);
         //const checkInputCode = await this.authService.counterAttemptConfirm(req.ip, body.code);
         const checkInputCode = true
         if (checkInputCode) {
@@ -221,16 +220,6 @@ export class AuthController {
     async aboutMe(@Request() req) {
         const foundUser = await this.usersRepository.findUserByLoginForAboutMe(req.user.login);
         return foundUser
-    }
-    @Get('get-registration-date')
-    async getRegistrationDate() {
-        const registrationData = await this.usersRepository.getRegistrationDate();
-        return registrationData
-    }
-    @Get('get-auth-date')
-    async getAuthDate() {
-        const authData = await this.usersRepository.getAuthDate();
-        return authData;
     }
     @Get('get-confirm-date')
     async getConfirmDate() {

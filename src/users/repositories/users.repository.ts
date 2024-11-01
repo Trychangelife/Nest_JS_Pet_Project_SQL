@@ -338,66 +338,6 @@ async confirmationEmail(userId: string, code: string): Promise<boolean> {
     }
 }
 
-async ipAddressIsScam(ip: string, login?: string): Promise<boolean> {
-    const queryRunner = this.dataSource.createQueryRunner();
-
-    await queryRunner.connect();
-
-    try {
-        // Устанавливаем пороговую дату, отнимая 10 секунд от текущего времени
-        const dateThreshold = sub(new Date(), { seconds: 10 });
-
-        // Выполняем SQL-запрос для подсчета регистраций с одинаковым IP за последние 10 секунд
-        const checkResultByIp = await queryRunner.query(
-            `SELECT COUNT(*) FROM registration_data 
-         WHERE ip = $1 AND date_registration > $2`,
-            [ip, dateThreshold]
-        );
-
-        const registrationCount = parseInt(checkResultByIp[0].count, 10);
-
-        // Проверяем, превышает ли количество регистраций порог (5)
-        if (registrationCount > 5) {
-            return false;
-        } else {
-            return true;
-        }
-    } catch (error) {
-        console.error('Error checking IP registration rate:', error);
-        return false;
-    } finally {
-        await queryRunner.release();
-    }
-}
-
-// Считаем количество авторизаций с учетом IP и Login за последние 10 секунд
-async counterAttemptAuth(ip: string, login?: string): Promise<boolean> {
-    const dateThreshold = sub(new Date(), { seconds: 10 });
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    try {
-        const [ipCount, loginCount] = await Promise.all([
-            queryRunner.query(
-                `SELECT COUNT(*) as count
-                 FROM auth_data
-                 WHERE ip = $1 AND try_auth_date > $2`,
-                [ip, dateThreshold]
-            ),
-            queryRunner.query(
-                `SELECT COUNT(*) as count
-                 FROM auth_data
-                 WHERE login = $1 AND try_auth_date > $2`,
-                [login, dateThreshold]
-            )
-        ]);
-        return parseInt(ipCount[0].count, 10) <= 5 && parseInt(loginCount[0].count, 10) <= 5;
-    } catch (error) {
-        console.error(error);
-        return false;
-    } finally {
-        await queryRunner.release();
-    }
-}
 async counterAttemptConfirm(ip: string, code: string): Promise<boolean> {
     const dateThreshold = sub(new Date(), { seconds: 10 });
     const queryRunner = this.dataSource.createQueryRunner();
@@ -624,33 +564,6 @@ async refreshActivationCode(userId: string, newCode: string): Promise<UsersType 
     }
 }
 
-
-// Эндпоинты для выгрузки информации из вспомогательных лог-баз
-async getRegistrationDate(): Promise<RegistrationDataType[]> {
-    
-    try {
-        const result = await this.dataSource.query(
-            `SELECT * FROM registration_data`
-        );
-        return result;
-    } catch (error) {
-        console.error(error);
-        return [];
-    }
-}
-
-async getAuthDate(): Promise<AuthDataType[]> {
-    try {
-        const result = await this.dataSource.query(
-            `SELECT * FROM auth_data`
-        );
-        return result;
-    } catch (error) {
-        console.error(error);
-        return [];
-    }
-}
-
 async getEmailSendDate(): Promise<EmailSendDataType[]> {
     try {
         const result = await this.dataSource.query(
@@ -687,31 +600,6 @@ async getTokenDate(): Promise<RefreshTokenStorageType[]> {
     } 
 }
 
-// Эндпоинты для наполнения информацией вспомогательных лог-баз
-async informationAboutRegistration(registrationData: RegistrationDataType): Promise<boolean> {
-    await this.dataSource.query(
-        `INSERT INTO registration_data (ip, date_registration, email)
-         VALUES ($1, $2, $3)`,
-        [
-            registrationData.ip,
-            registrationData.dateRegistation,
-            registrationData.email,
-        ],
-    );
-    return true
-}
-    
-async informationAboutAuth(authData: AuthDataType): Promise<boolean> {
-    await this.dataSource.query(
-        `INSERT INTO auth_data (ip, try_auth_date, login)
- VALUES ($1, $2, $3)`,
-        [
-            authData.ip,
-            authData.tryAuthDate,
-            authData.login,
-        ],) 
-    return true
-}
 async informationAboutEmailSend(emailSendData: EmailSendDataType): Promise<boolean> {
     await this.dataSource.query(
         `INSERT INTO email_send_data (ip, email_send_date, email)
@@ -720,17 +608,6 @@ async informationAboutEmailSend(emailSendData: EmailSendDataType): Promise<boole
             emailSendData.ip,
             emailSendData.emailSendDate,
             emailSendData.email,
-        ],)
-    return true
-}
-async informationAboutConfirmed(confirmedData: ConfirmedAttemptDataType): Promise<boolean> {
-    await this.dataSource.query(
-        `INSERT INTO confirmed_attempt_data (ip, try_confirm_date, code)
- VALUES ($1, $2, $3)`,
-        [
-            confirmedData.ip,
-            confirmedData.tryConfirmDate,
-            confirmedData.code,
         ],)
     return true
 }

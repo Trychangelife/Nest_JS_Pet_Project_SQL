@@ -13,17 +13,10 @@ export class AuthService {
     constructor (protected usersRepository: UsersRepository) {
 
     }
-
-    async ipAddressIsScam (ip: string, login: string): Promise <boolean> {
-        return await this.usersRepository.ipAddressIsScam(ip, login)
-    }
     async refreshActivationCode (email: string): Promise <UsersType | null> {
         const refreshCode = uuid()
         const userId = (await this.usersRepository.findUserByEmail(email))?.id
         return await this.usersRepository.refreshActivationCode(userId, refreshCode)
-    }
-    async counterAttemptAuth (ip: string, login: string): Promise <boolean> {
-        return await this.usersRepository.counterAttemptAuth(ip, login)
     }
     async counterAttemptConfirm (ip: string, code: string): Promise <boolean> {
         return await this.usersRepository.counterAttemptConfirm(ip, code)
@@ -36,22 +29,6 @@ export class AuthService {
     }
     async counterAttemptNewPassword (ip: string, code: string): Promise <boolean> {
         return await this.usersRepository.counterAttemptNewPassword(ip, code)
-    }
-    async informationAboutAuth (ip: string, login: string): Promise <boolean> {
-        const authData: AuthDataType = {
-            ip,
-            tryAuthDate: new Date(),
-            login
-        }
-        return await this.usersRepository.informationAboutAuth(authData)
-    }
-    async informationAboutConfirmed (ip: string, code: string): Promise <boolean> {
-        const confirmationData: ConfirmedAttemptDataType = {
-            ip,
-            tryConfirmDate: new Date(),
-            code
-        }
-        return await this.usersRepository.informationAboutConfirmed(confirmationData)
     }
     async informationAboutEmailSend (ip: string, email: string): Promise <boolean> {
         const emailSendData: EmailSendDataType = {
