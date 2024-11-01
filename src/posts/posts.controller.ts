@@ -120,7 +120,8 @@ export class PostController {
     @UseFilters(new HttpExceptionFilter())
     @Post(':postId/comments')
     async createCommentForPost(@Param('postId') postId: string, @Body() content: Comment, @Req() req) {
-        const newComment = await this.commandBus.execute(new CreateCommentForSpecificPostCommand(postId, content.content, req.user!.id, req.user!.login));
+        const user = req?.user ?? null;
+        const newComment = await this.commandBus.execute(new CreateCommentForSpecificPostCommand(postId, content.content, user.id, user.login));
         if (newComment) {
             return newComment
         }

@@ -319,7 +319,8 @@ export class PostsRepositorySql {
     }
     async createCommentForSpecificPost(createdComment: CommentsType): Promise<CommentsTypeView | boolean> {
 
-        const commentAfterCreated = await this.dataSource.query(`
+        try {
+            const commentAfterCreated = await this.dataSource.query(`
     INSERT INTO "comments" (content, "author_user_id", "author_login_id", "created_at", "post_id")
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
@@ -350,6 +351,11 @@ export class PostsRepositorySql {
         else {
             return null
         }
+        } catch (error) {
+            return null
+        }
+
+        
     }
 
     async takeCommentByIdPost(
@@ -424,6 +430,10 @@ export class PostsRepositorySql {
             `,
             [limit, offset, postId, userId]
         );
+
+        if (getAllComments.length === 0) {
+            return false
+        }
     
         // Возвращаем форматированный объект
         return {
