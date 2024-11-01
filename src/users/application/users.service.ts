@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common"
 import * as bcrypt from "bcrypt"
-import { ObjectId } from "mongodb"
 import { EmailService } from "src/email/email.service"
 import { UsersType } from "src/users/dto/UsersType"
 import { v4 as uuidv4 } from "uuid"
@@ -30,7 +29,7 @@ export class UsersService {
         const passwordSalt = await bcrypt.genSalt(10)
         const passwordHash = await this._generateHash(password, passwordSalt)
         // Построено на классе
-        const newUser = new User(new ObjectId(), uuidv4(),login, email, (new Date()).toISOString(), passwordHash, passwordSalt, {codeForActivated: uuidv4(), activatedStatus: false})
+        const newUser = new User( uuidv4(),login, email, (new Date()).toISOString(), passwordHash, passwordSalt, {codeForActivated: uuidv4(), activatedStatus: false})
         const checkScam = true
         if (checkScam == true) {
             if (await this.usersRepository.findUserByLogin(login)  || await this.usersRepository.findUserByEmail(email) ) {

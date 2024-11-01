@@ -1,6 +1,5 @@
 import { CommandHandler } from "@nestjs/cqrs"
 import * as bcrypt from "bcrypt"
-import { ObjectId } from "mongodb"
 import { EmailService } from "src/email/email.service"
 import { UserAlreadyExistsException } from "src/exception_filters/UserException"
 import { User } from "src/users/dto/UserClass"
@@ -29,8 +28,7 @@ export class CreateUserSAUseCase {
         const password_salt = await bcrypt.genSalt(10)
         const password_hash = await this._generateHash(command.password, password_salt)
         // Построено на классе
-        const newUser = new User(
-            new ObjectId(), 
+        const newUser = new User( 
             uuidv4(),command.login, 
             command.email, (new Date()).toISOString(), 
             password_hash, password_salt, 

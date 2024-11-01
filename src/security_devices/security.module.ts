@@ -3,7 +3,6 @@ import { JwtService } from "@nestjs/jwt";
 import { JwtServiceClass } from "src/guards/jwt.service";
 import { SecurityDeviceController } from "./security.controller";
 import { SecurityDeviceService } from "./application/security.service";
-import { MongooseModule } from "@nestjs/mongoose";
 import { SecurityDeviceRepository } from "./repostitories/security.repository";
 
 

@@ -1,6 +1,4 @@
 import { Injectable } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
 import { UsersType } from "src/users/dto/UsersType";
 import { EmailManager } from "./email.manager";
 import { DataSource } from "typeorm";

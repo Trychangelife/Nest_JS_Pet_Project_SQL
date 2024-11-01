@@ -1,6 +1,5 @@
 import 'dotenv/config'
 import { Module } from '@nestjs/common';
-import { ServerApiVersion } from 'mongodb';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MailerModule } from '@nest-modules/mailer';
@@ -72,14 +71,6 @@ import { CacheModule } from '@nestjs/cache-manager';
 
 
 
-
-
-const options = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverApi: ServerApiVersion.v1,
-};
-const uri:string = process.env.mongoURI
 
 const useCasesBlogs = [GetAllBlogsUseCase, GetTargetBlogUseCase, CreateBlogUseCase, UpdateBlogUseCase, DeleteBlogUseCase]
 const useCasesPosts = [GetAllPostsUseCase, GetSinglePostUseCase, GetAllPostsSpecificBlogUseCase, CreatePostUseCase, UpdatePostUseCase, DeletePostUseCase, CreateCommentForSpecificPostUseCase, GetCommentByPostIdUseCase, LikeDislikeForPostUseCase]
