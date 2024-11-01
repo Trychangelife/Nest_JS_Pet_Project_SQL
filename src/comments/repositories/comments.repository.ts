@@ -114,30 +114,37 @@ export class CommentsRepository {
         
     // }
     async updateCommentByCommentId(commentId: string, content: string, userId: string): Promise<boolean | null> {
-        const [comment] = await this.dataSource.query(
-            `
-        SELECT * 
-        FROM "comments" WHERE id = $1
-            `, [commentId])
-        if (comment !== null && comment.author_user_id === userId) {
-            const updatedComment = await this.dataSource.query(
+
+        try {
+            const [comment] = await this.dataSource.query(
                 `
-                UPDATE "comments"
-                SET content = $2
-                WHERE id = $1
-                RETURNING *
-                `,
-                [commentId, content]
-            );
-    
-            return updatedComment.length > 0;
-        }
-        if (comment == null) {
+            SELECT * 
+            FROM "comments" WHERE id = $1
+                `, [commentId])
+            if (comment !== null && comment?.author_user_id === userId) {
+                const updatedComment = await this.dataSource.query(
+                    `
+                    UPDATE "comments"
+                    SET content = $2
+                    WHERE id = $1
+                    RETURNING *
+                    `,
+                    [commentId, content]
+                );
+        
+                return updatedComment.length > 0;
+            }
+            if (comment == null) {
+                return null
+            }
+            else {
+                return false
+            }
+        } catch (error) {
+            console.log(error)
             return null
         }
-        else {
-            return false
-        }
+
     }
     async deleteCommentByCommentId(commentId: string, userId: string): Promise<boolean | null> {
 
