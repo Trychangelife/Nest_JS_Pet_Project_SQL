@@ -6,7 +6,6 @@ import { NewPasswordType, RecoveryPasswordType } from "src/auth/dto/RecoveryPass
 import { UsersType } from "src/users/dto/UsersType";
 import { CommentsType } from "src/comments/dto/CommentsType";
 import { PostsType } from "src/posts/dto/PostsType";
-import { BlogsType } from "src/blogs/dto/BlogsType";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource } from "typeorm";
 

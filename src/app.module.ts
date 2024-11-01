@@ -1,6 +1,5 @@
 import 'dotenv/config'
-import { MongooseModule } from '@nestjs/mongoose';
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ServerApiVersion } from 'mongodb';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -11,10 +10,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PostsRepositorySql } from './posts/repositories/posts.sql.repository';
 import { BlogsController } from './blogs/blogs.controller';
 import { PostController } from './posts/posts.controller';
-import { BloggersController } from './bloggers/bloggers.controller';
 import { BlogsService } from './blogs/application/blogs.service';
 import { PostsService } from './posts/application/posts.service';
-import { authDataSchema, commentsSchema, postSchema, refreshTokenSchema, usersSchema, registrationDataSchema, emailSendSchema, codeConfirmSchema, recoveryPasswordSchema, newPasswordSchema } from './db';
 import { UsersService } from './users/application/users.service';
 import { AuthService } from './auth/application/auth.service';
 import { CommentsService } from './comments/application/comments.service';
@@ -60,20 +57,13 @@ import { FoundUserByDeviceIdUseCase } from './security_devices/application/use-c
 import { SuperAdminBlogsController } from './superAdmin/SAblog/sa.blog.controller';
 import { GetAllBlogsSuperAdminUseCase } from './superAdmin/SAblog/application/use-cases/get_all_blogs';
 import { BlogsSuperAdminRepository } from './superAdmin/SAblog/repositories/blogs.SA.repository';
-import { CreateBlogByBloggerUseCase } from './bloggers/application/use-cases/create_blog';
-import { BlogsByBloggerRepository } from './bloggers/repositories/bloggers.repository';
 import { GetUserByUserIdUseCase } from './users/application/use-cases/Get_user_by_id';
-import { GetAllBlogsforBloggerUseCase } from './bloggers/application/use-cases/get_all_blogs';
 import { SuperAdminUsersController } from './superAdmin/SAusers/sa.users.controller';
 import { CreateUserSAUseCase } from './superAdmin/SAusers/application/useCases/create_user_SA';
 import { GetAllUsersAsSuperAdminUseCase } from './superAdmin/SAusers/application/useCases/get_all_user_SA';
 import { DeleteUserAsSuperAdminUseCase } from './superAdmin/SAusers/application/useCases/delete_user_SA';
 import { BanUserAsSuperAdminUseCase } from './superAdmin/SAusers/application/useCases/ban_user_SA';
 import { BindingBlogSuperAdminUseCase } from './superAdmin/SAblog/application/use-cases/binding_blog';
-import { DeleteBlogForSpecificBloggerUseCase } from './bloggers/application/use-cases/delete_single_blog';
-import { CreatePostByBloggerUseCase } from './bloggers/application/use-cases/create_Post';
-import { UpdateBlogByBloggerUseCase } from './bloggers/application/use-cases/update_blog';
-import { DeletePostByBloggerUseCase } from './bloggers/application/use-cases/delete_post_by_id';
 import { CheckBanStatusSuperAdminUseCase } from './superAdmin/SAusers/application/useCases/check_banStatus';
 import { CheckForbiddenUseCase } from './posts/application/use-cases/check_forbidden';
 import { SuperAdminUsersRepositorySql } from './superAdmin/SAusers/repositories/SuperAdmin.user.repositorySQL';
@@ -95,7 +85,6 @@ const useCasesBlogs = [GetAllBlogsUseCase, GetTargetBlogUseCase, CreateBlogUseCa
 const useCasesPosts = [GetAllPostsUseCase, GetSinglePostUseCase, GetAllPostsSpecificBlogUseCase, CreatePostUseCase, UpdatePostUseCase, DeletePostUseCase, CreateCommentForSpecificPostUseCase, GetCommentByPostIdUseCase, LikeDislikeForPostUseCase]
 const useCasesComments = [GetCommentUseCase, DeleteCommentUseCase, UpdateCommentUseCase, LikeDislikeCommentUseCase]
 const useCasesDevices = [GetAllDevicesUseCase, TerminateAllSessionUseCase,TerminateSessionByIdUseCase, FoundUserByDeviceIdUseCase]
-const useCasesByBloggers = [CreateBlogByBloggerUseCase, GetAllBlogsforBloggerUseCase, DeleteBlogForSpecificBloggerUseCase, UpdateBlogByBloggerUseCase, CreatePostByBloggerUseCase, DeletePostByBloggerUseCase]
 const useCasesSuperAdminBlogs = [GetAllBlogsSuperAdminUseCase, BindingBlogSuperAdminUseCase]
 const useCasesSuperAdminUsers = [CreateUserSAUseCase, CheckBanStatusSuperAdminUseCase, GetAllUsersAsSuperAdminUseCase, DeleteUserAsSuperAdminUseCase, BanUserAsSuperAdminUseCase]
 const useCasesUsers = [GetUserByUserIdUseCase]
@@ -106,7 +95,6 @@ const blogsProviders = [BlogsService, ]
 const postsProviders = [PostsService]
 const commentsProviders = [CommentsService, CommentsRepository,]
 const usersProviders = [UsersService, UsersRepository,]
-const blogsByBloggersProviders = [BlogsByBloggerRepository]
 const emailProviders = [EmailService, EmailManager, EmailAdapter,]
 const authProviders = [AuthService,]
 const securityDevicesProviders = [SecurityDeviceService, SecurityDeviceRepository,]
@@ -141,7 +129,7 @@ const usersSuperAdminProviders = [SuperAdminUsersRepositorySql]
     //url: process.env.DATABASE_URL,
     //autoLoadEntities: false,
     //synchronize: true,
-    logging: true,
+    logging: false,
     ssl: {
       rejectUnauthorized: true,
       ca: fs.readFileSync("./ca.pem").toString()
@@ -189,7 +177,7 @@ const usersSuperAdminProviders = [SuperAdminUsersRepositorySql]
   ttl: 10000,
   max: 10
 })],
-  controllers: [AppController, BlogsController, PostController, UsersController, AuthController, CommentsController, FullDataController, SecurityDeviceController, BloggersController, SuperAdminBlogsController, SuperAdminUsersController],
+  controllers: [AppController, BlogsController, PostController, UsersController, AuthController, CommentsController, FullDataController, SecurityDeviceController, SuperAdminBlogsController, SuperAdminUsersController],
   providers: [AppService,
     BlogsRepositorySql,
    PostsRepositorySql,
@@ -200,7 +188,6 @@ const usersSuperAdminProviders = [SuperAdminUsersRepositorySql]
     ...postsProviders,
     ...commentsProviders,
     ...usersProviders,
-    ...blogsByBloggersProviders,
     ...emailProviders,
     ...authProviders,
     ...securityDevicesProviders,
@@ -213,7 +200,6 @@ const usersSuperAdminProviders = [SuperAdminUsersRepositorySql]
     ...useCasesComments,
     ...useCasesDevices,
     ...useCasesSuperAdminBlogs,
-    ...useCasesByBloggers,
     ...useCasesUsers,
     ...useCasesSuperAdminUsers,
     ...UtilityUseCase,
