@@ -9,7 +9,8 @@ export class GetAllPostsSpecificBlogCommand {
         public page?: number, 
         public pageSize?: number,
         public sortBy?: string,
-        public sortDirection?: string
+        public sortDirection?: string,
+        public userId?: number,
         ) {
         
     }
@@ -25,7 +26,7 @@ export class GetAllPostsSpecificBlogUseCase {
             skip = (command.page - 1) * command.pageSize
         }
 
-        return await this.postsRepository.allPostsSpecificBlogger(command.blogId, skip, command.pageSize, command.page, command.sortBy, command.sortDirection)
+        return await this.postsRepository.allPostsSpecificBlogger(command.blogId, skip, command.pageSize, command.page, command.sortBy, command.sortDirection, command.userId)
     }
 }
 

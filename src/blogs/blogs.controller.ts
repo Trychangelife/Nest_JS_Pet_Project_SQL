@@ -18,6 +18,7 @@ import { DeleteBlogCommand } from "../superAdmin/SAblog/application/use-cases/de
 import { Blogs } from "src/blogs/dto/Blog_validator_type";
 import { GetAllPostsSpecificBlogCommand } from "src/superAdmin/SAblog/application/use-cases/get_all_posts_specific_blog";
 import { CreatePostCommand } from "src/posts/application/use-cases/create_post";
+import { JwtFakeAuthGuard } from "src/guards/jwt-fake-auth.guard";
 
 @Controller('blogs')
 export class BlogsController {
@@ -48,10 +49,12 @@ export class BlogsController {
   }
 
   // Return posts for blog with paging and sorting
+  @UseGuards(JwtFakeAuthGuard)
   @Get(':blogId/posts')
-  async getAllPostByBlogId(@Param() params, @Query() query: { pageNumber: string, pageSize: string, sortBy: string, sortDirection: string }) {
+  async getAllPostByBlogId(@Param() params, @Query() query: { pageNumber: string, pageSize: string, sortBy: string, sortDirection: string },  @Req() req) {
+    const userId = req?.user?.id ?? null;
     const paginationData = constructorPagination(query.pageSize as string, query.pageNumber as string, query.sortBy as string, query.sortDirection as string);
-    const full: object = await this.commandBus.execute(new GetAllPostsSpecificBlogCommand(params.blogId, paginationData.pageNumber, paginationData.pageSize, paginationData.sortBy, paginationData.sortDirection));
+    const full: object = await this.commandBus.execute(new GetAllPostsSpecificBlogCommand(params.blogId, paginationData.pageNumber, paginationData.pageSize, paginationData.sortBy, paginationData.sortDirection, userId));
     return full
   }
 

@@ -77,7 +77,8 @@ async allPostsSpecificBlogger(
     limit: number = 10, 
     pageNumber: number = 1, 
     sortBy: string = 'created_at',
-    sortDirection: string = 'desc'
+    sortDirection: string = 'desc',
+    userId?: number
 ): Promise<object | null> {
     // Объект для сопоставления значений сортировки с фактическими именами столбцов
     const sortFieldMap = {
@@ -117,7 +118,17 @@ async allPostsSpecificBlogger(
             p.created_at AS "createdAt",
             COALESCE(pl.likes_count, 0) AS "likesCount",
             COALESCE(pd.dislikes_count, 0) AS "dislikesCount",
-            'None' AS "myStatus",  -- всегда "None" так как userId не передается
+            CASE 
+            WHEN CAST($4 AS integer) IS NOT NULL AND EXISTS (
+                SELECT 1 FROM "posts_like_storage" pls 
+                WHERE pls.post_id = p.id AND pls.user_id = $4
+            ) THEN 'Like'
+            WHEN CAST($4 AS integer) IS NOT NULL AND EXISTS (
+                SELECT 1 FROM "posts_dislike_storage" pds 
+                WHERE pds.post_id = p.id AND pds.user_id = $4
+            ) THEN 'Dislike'
+            ELSE 'None'
+        END AS "myStatus",
             COALESCE(latest_likes.likes, '[]'::json) AS "newestLikes" -- Получаем последние лайки
         FROM "posts" p
         LEFT JOIN (
@@ -146,7 +157,7 @@ async allPostsSpecificBlogger(
         ORDER BY ${sortField} ${order}
         LIMIT $2 OFFSET $3
         `,
-        [blogId, limit, offset]
+        [blogId, limit, offset, userId]
     );
 
     // Форматируем вывод
@@ -167,7 +178,11 @@ async allPostsSpecificBlogger(
                 likesCount: Number(post.likesCount),
                 dislikesCount: Number(post.dislikesCount),
                 myStatus: post.myStatus, // всегда "None"
-                newestLikes: post.newestLikes.slice(0, 3) // последние 3 лайка
+                newestLikes: post.newestLikes.map(like => ({
+                    addedAt: like.addedAt,
+                    userId: like.userId.toString(), // Конвертируем userId в строку
+                    login: like.login
+                })).slice(0, 3) // последние 3 лайка // последние 3 лайка
             },
         }))
     };
