@@ -5,9 +5,9 @@ import { UsersRepository } from "src/users/repositories/users.repository";
 import { PayloadType } from "src/utils/types";
 import { SecurityDeviceService } from "./application/security.service";
 import { FoundUserByDeviceIdCommand } from "./application/use-cases/Found_user_by_device_id";
-import { GetAllDevicesCommand } from "./application/use-cases/Get_all_devices";
 import { TerminateAllSessionCommand } from "./application/use-cases/Terminate_all_session";
 import { TerminateSessionByIdCommand } from "./application/use-cases/Terminate_target_session_by_id";
+import { GetAllDevicesCommand } from "./application/use-cases/Get_all_devices";
 
 @Controller('security')
 export class SecurityDeviceController {
@@ -15,8 +15,7 @@ export class SecurityDeviceController {
     constructor(
         protected jwtServiceClass: JwtServiceClass,
         protected usersRepository: UsersRepository, 
-        protected securityService: SecurityDeviceService,
-        private commandBus: CommandBus,) {
+        private readonly commandBus: CommandBus,) {
     }
     //GET - список всех активных сессий пользователя
     @Get('devices')

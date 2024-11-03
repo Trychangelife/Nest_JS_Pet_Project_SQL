@@ -1,6 +1,5 @@
 import { CacheModule } from "@nestjs/cache-manager";
 import { Global, Module } from "@nestjs/common";
-import { CommandBus, CqrsModule } from "@nestjs/cqrs";
 import { JwtModule, JwtService } from "@nestjs/jwt";
 import { JwtAuthGuard } from "src/guards/jwt-auth.guard";
 import { JwtServiceClass } from "src/guards/jwt.service";
@@ -10,7 +9,6 @@ import { UsersModule } from "src/users/users.module";
 @Global()
 @Module({
     imports: [UsersModule,
-        CqrsModule, 
         CacheModule.register({
         ttl: 10000,
         max: 10
@@ -21,8 +19,8 @@ import { UsersModule } from "src/users/users.module";
         },
         
     })],
-    providers: [JwtServiceClass, JwtService, JwtAuthGuard, CommandBus, RateLimitGuard],
-    exports: [JwtServiceClass, JwtService, JwtAuthGuard, CommandBus, RateLimitGuard, CqrsModule, CacheModule, JwtModule]
+    providers: [JwtServiceClass, JwtService, JwtAuthGuard, RateLimitGuard],
+    exports: [JwtServiceClass, JwtService, JwtAuthGuard, RateLimitGuard, CacheModule, JwtModule]
 })
 
 export class GlobalModule {}

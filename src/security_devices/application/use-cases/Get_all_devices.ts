@@ -11,7 +11,7 @@ export class GetAllDevicesCommand {
 
 @CommandHandler(GetAllDevicesCommand)
 export class GetAllDevicesUseCase {
-    constructor (public securityDeviceRepository: SecurityDeviceRepository ) {}
+    constructor (public securityDeviceRepository: SecurityDeviceRepository, ) {}
 
     async execute(command: GetAllDevicesCommand): Promise <object> {
         const foundAllDevice = await this.securityDeviceRepository.returnAllDevices(command.userId)

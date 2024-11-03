@@ -15,7 +15,8 @@ import { SecurityDeviceModule } from './security_devices/security.module';
 import { BlogsSuperAdminModule } from './superAdmin/SAblog/sa.blog.module';
 import { UsersSuperAdminModule } from './superAdmin/SAusers/sa.users.module';
 import { UsersModule } from './users/users.module';
-import { GlobalModule } from './utils/global_modules';
+import { GlobalModule } from './utils/global_module';
+import { CqrsModule } from '@nestjs/cqrs';
 
 
 @Module({
@@ -31,6 +32,7 @@ import { GlobalModule } from './utils/global_modules';
     UsersSuperAdminModule,
     FullDeleteModule,
     CommentsModule,
+
 
 
   //Вариант для Aiven
@@ -69,7 +71,7 @@ import { GlobalModule } from './utils/global_modules';
   // }),
 ],
   controllers: [AppController],
-  providers: [AppService,]
+  providers: [AppService]
 
 })
 export class AppModule {}
