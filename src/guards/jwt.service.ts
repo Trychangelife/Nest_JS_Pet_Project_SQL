@@ -100,9 +100,9 @@ export class JwtServiceClass {
             WHERE device_id = $1
         `, [payloadToken.deviceId]);
         //Если приходит undefined - значит токена в базе уже нет, возможно сделали logout, тогда пусть идут входят в систему.
-        if (checkToken !== undefined) {
+        if (checkToken !== undefined && rToken !== null) {
             try {
-                const result = this.jwtService.verify(checkToken.refresh_token, { secret: process.env.JWT_REFRESH_SECRET });
+                const result = this.jwtService.verify(rToken, { secret: process.env.JWT_REFRESH_SECRET });
                 const newAccessToken = await this.accessToken(result);
                 const newRefreshToken = await this.refreshToken(result, ip, titleDevice, checkToken.device_id, rToken);
 

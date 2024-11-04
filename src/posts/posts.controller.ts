@@ -56,6 +56,7 @@ export class PostController {
     @UseFilters(new HttpExceptionFilter())
     @Post()
     async createPost(@Body() post: PostTypeValidatorForCreate, @Res() res) {
+        console.log("попал в контролер")
         const createdPost: string | object | null = await this.commandBus.execute(new CreatePostCommand(post.title, post.content, post.shortDescription, post.userId, post.blogId));
         if (createdPost == null) {
             throw new HttpException('Something wrong, check input data', HttpStatus.BAD_REQUEST)

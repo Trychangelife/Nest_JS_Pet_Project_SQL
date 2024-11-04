@@ -71,6 +71,7 @@ describe('blog_post_comment', () => {
                 password: 'qwerty',
             })
             .set('Authorization', 'Basic ' + Buffer.from('admin:qwerty').toString('base64')) // Basic auth
+            .set('User-Agent', 'userAgentFromTest')
             .expect(200);
 
     // Получаем значение заголовка Set-Cookie и преобразуем его в массив

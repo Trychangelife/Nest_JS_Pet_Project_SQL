@@ -14,6 +14,7 @@ export class BasicAuthGuard implements CanActivate {
     var userNamePassword = 'admin:qwerty'
     var bytes = utf8.encode(userNamePassword)
     var encoded = 'Basic ' + base64.encode(bytes)
+    console.log("Попал в авторизацию")
     if (!headerAuth || headerAuth.indexOf('Basic ') === - 1) {
         throw new HttpException('Missing Authorization Header',HttpStatus.UNAUTHORIZED)
     }

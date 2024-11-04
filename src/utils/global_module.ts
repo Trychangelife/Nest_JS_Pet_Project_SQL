@@ -1,9 +1,11 @@
 import { CacheModule } from "@nestjs/cache-manager";
 import { Global, Module } from "@nestjs/common";
+import { CqrsModule } from "@nestjs/cqrs";
 import { JwtModule, JwtService } from "@nestjs/jwt";
 import { JwtAuthGuard } from "src/guards/jwt-auth.guard";
 import { JwtServiceClass } from "src/guards/jwt.service";
 import { RateLimitGuard } from "src/guards/rate-limit.guard";
+import { BlogIsExistRule } from "src/posts/validator.posts.form";
 import { UsersModule } from "src/users/users.module";
 
 @Global()
@@ -18,9 +20,9 @@ import { UsersModule } from "src/users/users.module";
             expiresIn: '24h'
         },
         
-    })],
-    providers: [JwtServiceClass, JwtService, JwtAuthGuard, RateLimitGuard],
-    exports: [JwtServiceClass, JwtService, JwtAuthGuard, RateLimitGuard, CacheModule, JwtModule]
+    }), CqrsModule],
+    providers: [JwtServiceClass, JwtService, JwtAuthGuard, RateLimitGuard, BlogIsExistRule],
+    exports: [JwtServiceClass, JwtService, JwtAuthGuard, RateLimitGuard, CacheModule, JwtModule, BlogIsExistRule]
 })
 
 export class GlobalModule {}

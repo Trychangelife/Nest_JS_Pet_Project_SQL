@@ -70,6 +70,7 @@ describe('Auth flow (e2e)', () => {
                 password: 'qwerty',
             })
             .set('Authorization', 'Basic ' + Buffer.from('admin:qwerty').toString('base64')) // Basic auth
+            .set('User-Agent', 'userAgentFromTest')
             .expect(200);
 
     // Получаем значение заголовка Set-Cookie и преобразуем его в массив
@@ -95,6 +96,7 @@ describe('Auth flow (e2e)', () => {
             const response = await request(app.getHttpServer())
                 .post('/auth/logout')
                 .set('Cookie', refreshToken)
+                .set('User-Agent', 'userAgentFromTest')
                 .send();
 
             expect(response.status).toBe(204);
@@ -106,6 +108,7 @@ describe('Auth flow (e2e)', () => {
             const response = await request(app.getHttpServer())
                 .post('/auth/refresh-token')
                 .set('Cookie', refreshToken)
+                .set('User-Agent', 'userAgentFromTest')
                 .send();
 
             expect(response.status).toBe(401);
