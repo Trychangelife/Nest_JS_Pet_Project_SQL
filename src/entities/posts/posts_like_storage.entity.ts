@@ -11,14 +11,14 @@ export class PostsLikeStorageEntity {
   @Column({ type: 'timestamptz' }) // Тип для timestamp with time zone
   added_at: Date;
 
-  @ManyToOne(() => UserEntity, (user) => user.id, { eager: true }) // связь с пользователем
+  @ManyToOne(() => UserEntity, (user) => user.id, { eager: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' }) // связь с пользователем
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;
 
   @Column({ type: 'varchar' })
   user_login: string;
 
-  @ManyToOne(() => PostEntity, (post) => post.id, { eager: true }) // связь с постом
+  @ManyToOne(() => PostEntity, (post) => post.id, { eager: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' }) // связь с постом
   @JoinColumn({ name: 'post_id' })
   post: PostEntity;
 
