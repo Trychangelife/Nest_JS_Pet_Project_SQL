@@ -12,7 +12,7 @@ export class CommentLikeStorageEntity {
   added_at: Date;
 
   @Column({ type: 'varchar', nullable: false })
-  userLogin: string;
+  user_login: string;
 
   // Связь с пользователем
   @ManyToOne(() => UserEntity, (user) => user.id,{ onDelete: 'CASCADE', onUpdate: 'CASCADE' })
