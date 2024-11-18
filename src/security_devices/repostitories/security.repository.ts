@@ -18,8 +18,8 @@ export class SecurityDeviceRepository {
             .select([
                 "device.ip",
                 "device.title",
-                "device.lastActivateDate",
-                "device.deviceId"
+                "device.last_activate_date",
+                "device.device_id"
             ])
             .getMany();
 
