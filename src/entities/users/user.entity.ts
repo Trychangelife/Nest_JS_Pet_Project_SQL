@@ -19,7 +19,7 @@ export class UserEntity {
     @OneToOne(() => BanInfoEntity, (banInfo) => banInfo.user_id) // Связь с BanInfoEntity
     banInfo: BanInfoEntity;
 
-    @OneToOne(() => EmailConfirmationEntity)
-    @JoinColumn({ name: 'id', referencedColumnName: 'user_id' })
-    email_confirmation: EmailConfirmationEntity;
+    @OneToOne(() => EmailConfirmationEntity, (emailConfirmation) => emailConfirmation.user) // Связь с EmailConfirmationEntity
+    email_confirmation: EmailConfirmationEntity; // Поле, которое используется в запросе
+
 }
