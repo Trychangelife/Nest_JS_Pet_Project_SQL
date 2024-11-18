@@ -1,79 +1,67 @@
-import { Injectable } from "@nestjs/common"
-import { InjectDataSource } from "@nestjs/typeorm"
-import { DataSource } from "typeorm"
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { RefreshTokenStorageEntity } from "src/entities/auth/refresh_token_storage.entity";
+import { Repository } from "typeorm";
 
-export const deviceView = {
-    _id: 0,
-    ip: 1,
-    title: 1,
-    lastActiveDate: 1,
-    deviceId: 1
-}
 
 @Injectable()
 export class SecurityDeviceRepository {
-
-    constructor ( 
-    @InjectDataSource() protected dataSource: DataSource
-    ) {   }
-
+    constructor(
+        @InjectRepository(RefreshTokenStorageEntity)
+        private readonly refreshTokenRepo: Repository<RefreshTokenStorageEntity>,
+    ) {}
 
     async returnAllDevices(userId: string): Promise<object[]> {
-      const foundAllDevice = await this.dataSource.query(`
-          SELECT *
-          FROM refresh_token_storage
-          WHERE user_id = $1
-      `, [userId]);
-  
-      // Преобразуем каждый элемент массива в нужный формат
-      const resultView = foundAllDevice.map((device: any) => ({
-          ip: device.ip,
-          title: device.title,
-          lastActiveDate: device.last_activate_date,
-          deviceId: device.device_id,
-      }));
-      return resultView;
-  }
-  async terminateAllSession(userId: string, deviceId: string): Promise<boolean> {
-    // Находим все устройства пользователя, кроме указанного deviceId
-    const foundAllDevices = await this.dataSource.query(`
-        SELECT device_id
-        FROM refresh_token_storage
-        WHERE user_id = $1 AND device_id <> $2
-    `, [userId, deviceId]);
+        const foundAllDevices = await this.refreshTokenRepo
+            .createQueryBuilder("device")
+            .where("device.user_id = :userId", { userId })
+            .select([
+                "device.ip",
+                "device.title",
+                "device.lastActivateDate",
+                "device.deviceId"
+            ])
+            .getMany();
 
-    // Удаляем все найденные устройства, кроме указанного
-    if (foundAllDevices.length > 0) {
-        await this.dataSource.query(`
-            DELETE FROM refresh_token_storage
-            WHERE user_id = $1 AND device_id <> $2
-        `, [userId, deviceId]);
+        return foundAllDevices.map(device => ({
+            ip: device.ip,
+            title: device.title,
+            lastActiveDate: device.last_activate_date,
+            deviceId: device.device_id,
+        }));
     }
 
-    return true;
-}
-async terminateTargetSessionById(userId: string, deviceId: string): Promise<boolean> {
-  await this.dataSource.query(`
-      DELETE FROM refresh_token_storage
-      WHERE user_id = $1 AND device_id = $2
-  `, [userId, deviceId]);
+    async terminateAllSession(userId: string, deviceId: string): Promise<boolean> {
+        const deleteResult = await this.refreshTokenRepo
+            .createQueryBuilder()
+            .delete()
+            .from(RefreshTokenStorageEntity)
+            .where("user_id = :userId", { userId })
+            .andWhere("device_id <> :deviceId", { deviceId })
+            .execute();
 
-  return true;
-}
+        return deleteResult.affected > 0;
+    }
 
-async foundUserIdByDeviceId(deviceId: string): Promise<string | null> {
-  const result = await this.dataSource.query(`
-      SELECT user_id
-      FROM refresh_token_storage
-      WHERE device_id = $1
-      LIMIT 1
-  `, [deviceId]);
+    async terminateTargetSessionById(userId: string, deviceId: string): Promise<boolean> {
+        const deleteResult = await this.refreshTokenRepo
+            .createQueryBuilder()
+            .delete()
+            .from(RefreshTokenStorageEntity)
+            .where("user_id = :userId", { userId })
+            .andWhere("device_id = :deviceId", { deviceId })
+            .execute();
 
-  // Проверяем, найден ли пользователь по deviceId
-  if (result.length > 0) {
-      return result[0].user_id; // Возвращаем userId, если запись найдена
-  }
-  return null; // Возвращаем null, если запись не найдена
-}
+        return deleteResult.affected > 0;
+    }
 
+    async foundUserIdByDeviceId(deviceId: string): Promise<number | null> {
+        const result = await this.refreshTokenRepo
+            .createQueryBuilder("device")
+            .select("device.user_id")
+            .where("device.device_id = :deviceId", { deviceId })
+            .getOne();
+
+        return result ? result.user_id : null;
+    }
 }

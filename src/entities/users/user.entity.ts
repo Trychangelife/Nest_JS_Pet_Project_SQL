@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, OneToOne } from 'typeorm';
+import { BanInfoEntity } from './ban_info.entity';
 
 @Entity({ name: 'users' })
 export class UserEntity {
@@ -13,4 +14,7 @@ export class UserEntity {
 
     @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
     created_at: Date;
+
+    @OneToOne(() => BanInfoEntity, (banInfo) => banInfo.user_id) // Связь с BanInfoEntity
+    banInfo: BanInfoEntity;
 }

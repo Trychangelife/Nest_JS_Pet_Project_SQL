@@ -13,6 +13,7 @@ import { CreateUserSACommand } from "./application/useCases/create_user_SA";
 import { DeleteUserAsSuperAdminCommand } from "./application/useCases/delete_user_SA";
 import { GetAllUsersAsSuperAdminCommand } from "./application/useCases/get_all_user_SA";
 import { BanUserInputModel } from "./dto/banUserInputModel";
+import { userViewModel } from "src/users/dto/UsersType";
 
 @Controller('sa/users')
 export class SuperAdminUsersController {
@@ -25,21 +26,15 @@ export class SuperAdminUsersController {
     @UseGuards(UserRegistrationFlow)
     @UseFilters(new HttpExceptionFilter())
     async createUser(@Body() user: AuthForm,  @Request() req: {ip: string},  @Res() res) {
-        const result = await this.commandBus.execute(new CreateUserSACommand(user.password, user.login, user.email, req.ip));
+        const result: userViewModel | null = await this.commandBus.execute(new CreateUserSACommand(user.password, user.login, user.email, req.ip));
+        console.log("result:", result)
        if (result == null) {
             throw new HttpException("To many requests", HttpStatus.TOO_MANY_REQUESTS)
         }
         else {
-          //View модель только для тестов, потому что в БД лежит Integer, а тесты требуют строку.
-          const viewModel = {
-            id: result.id.toString(),
-            email: result.email,
-            login: result.login,
-            createdAt: result.createdAt
-          }
             res
                 .status(201)
-                .send(viewModel)
+                .send(result)
         }
     }
 

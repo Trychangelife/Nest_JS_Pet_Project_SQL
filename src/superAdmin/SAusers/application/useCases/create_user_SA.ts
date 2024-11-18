@@ -36,14 +36,6 @@ export class CreateUserSAUseCase {
             {codeForRecovery: null, createdDateRecoveryCode: null},
             {isBanned: false, banDate: null, banReason: null})
 
-        const registrationData: RegistrationDataType = {
-            ip: command.ip,
-            dateRegistation: new Date(), 
-            email: command.email
-        }
-        //await this.usersRepository.informationAboutRegistration(registrationData)
-        //const checkScam = await this.usersRepository.ipAddressIsScam(command.ip)
-        //if (checkScam == true) {
             const findUserByLogin = await this.usersRepository.findUserByLogin(command.login)
             const findUserByEmail = await this.usersRepository.findUserByEmail(command.email)
             if (findUserByLogin) {
@@ -54,13 +46,9 @@ export class CreateUserSAUseCase {
               }
             else {
                 const createdUser: userViewModel | null = await this.usersRepository.createUser(newUser)
-                //this.emailService.emailConfirmation(newUser.email)
+                this.emailService.emailConfirmation(newUser.email)
                 return createdUser
             }
-       //}
-       // else {
-        //    return null
-        //} 
         
     }
     async _generateHash(password: string, salt: string) {

@@ -3,10 +3,17 @@ import { Injectable } from "@nestjs/common"
 import { InjectDataSource } from "@nestjs/typeorm"
 import { sub } from "date-fns"
 import { NewPasswordType, RecoveryPasswordType } from "src/auth/dto/RecoveryPasswordType"
+import { AccountUserDataEntity } from "src/entities/auth/account_user_data.entity"
+import { NewPasswordEntity } from "src/entities/auth/new_password.entity"
+import { EmailConfirmationEntity } from "src/entities/email/email_confirmation.entity"
+import { BanInfoEntity } from "src/entities/users/ban_info.entity"
+import { RecoveryPasswordEntity } from "src/entities/users/recovery_password.entity"
+import { RecoveryPasswordInfoEntity } from "src/entities/users/recovery_password_info.entity"
+import { UserEntity } from "src/entities/users/user.entity"
 import { BanStatus } from "src/superAdmin/SAblog/dto/banStatus"
-import { UsersType } from "src/users/dto/UsersType"
+import { UsersType, userViewModel } from "src/users/dto/UsersType"
 import { ConfirmedAttemptDataType, EmailSendDataType, RefreshTokenStorageType } from "src/utils/types"
-import { DataSource } from "typeorm"
+import { DataSource, InsertResult } from "typeorm"
 
 
 @Injectable()
@@ -70,10 +77,6 @@ export class SuperAdminUsersRepositorySql {
             const usersQuery = `
                 SELECT u.id, u.login, u.email, u.created_at AS createdAt
                 FROM users u
-                LEFT JOIN account_user_data ad ON u.id = ad.user_id
-                LEFT JOIN email_confirmation ec ON u.id = ec.user_id
-                LEFT JOIN recovery_password_info rpi ON u.id = rpi.user_id
-                LEFT JOIN ban_info bi ON u.id = bi.user_id
                 ${filterConditions}
                 ORDER BY u.${dbSortingColumn} ${sortDirection}
                 LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2};
@@ -124,7 +127,7 @@ export class SuperAdminUsersRepositorySql {
     
     
 
-    async createUser(newUser: UsersType): Promise<UsersType | null> {
+    async createUser(newUser: UsersType): Promise<userViewModel| null> {
         const queryRunner = this.dataSource.createQueryRunner();
 
         await queryRunner.connect();
@@ -132,55 +135,84 @@ export class SuperAdminUsersRepositorySql {
 
         try {
             // Шаг 1: Вставка данных в таблицу users
-            const usersInsertResult = await queryRunner.query(
-                `INSERT INTO users (login, email, created_at)
-         VALUES ($1, $2, $3)
-         RETURNING id`,
-                [newUser.login, newUser.email, newUser.createdAt],
-            );
-            const userId = usersInsertResult[0].id;
-            // Шаг 2: Вставка данных в таблицу account_user_data
-            await queryRunner.query(
-                `INSERT INTO account_user_data (user_id, password_hash, password_salt)
-         VALUES ($1, $2, $3)`,
-                [userId, newUser.password_hash, newUser.password_salt],
-            );
-            // Шаг 3: Вставка данных в таблицу email_confirmation
-            await queryRunner.query(
-                `INSERT INTO email_confirmation (user_id, code_for_activated, activated_status)
-         VALUES ($1, $2, $3)`,
-                [userId, newUser.emailConfirmation.codeForActivated, newUser.emailConfirmation.activatedStatus],
-            );
-            // Шаг 4: Вставка данных в таблицу recovery_password_info
-            await queryRunner.query(
-                `INSERT INTO recovery_password_info (user_id, code_for_recovery, created_date_recovery_code)
-         VALUES ($1, $2, $3)`,
-                [
-                    userId,
-                    newUser.recoveryPasswordInformation?.codeForRecovery || null,
-                    newUser.recoveryPasswordInformation?.createdDateRecoveryCode || null,
-                ],
-            );
-            // Шаг 5: Вставка данных в таблицу ban_info
-            await queryRunner.query(
-                `INSERT INTO ban_info (user_id, is_banned, ban_date, ban_reason)
-         VALUES ($1, $2, $3, $4)`,
-                [
-                    userId,
-                    newUser.banInfo?.isBanned || false,
-                    newUser.banInfo?.banDate || null,
-                    newUser.banInfo?.banReason || null,
-                ],
-            );
-            // Возвращение созданного пользователя
-            const createdUser = await queryRunner.query(
-                `SELECT id, login, email, created_at as "createdAt" FROM users WHERE id = $1`, [userId]
-            );
+            const usersInsertResult: InsertResult = await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(UserEntity)
+            .values({
+                login: newUser.login,
+                email: newUser.email,
+                created_at: newUser.createdAt
+            })
+            .execute()
+            const userId = usersInsertResult.generatedMaps[0].id
+         // Шаг 2: Вставка данных в таблицу account_user_data
+        await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(AccountUserDataEntity)
+            .values({
+                user_id: userId,
+                password_hash: newUser.password_hash,
+                password_salt: newUser.password_salt,
+            })
+            .execute();
 
+        // Шаг 3: Вставка данных в таблицу email_confirmation
+        await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(EmailConfirmationEntity)
+            .values({
+                user_id: userId,
+                code_for_activated: newUser.emailConfirmation.codeForActivated,
+                activated_status: newUser.emailConfirmation.activatedStatus,
+            })
+            .execute();
+
+        // Шаг 4: Вставка данных в таблицу recovery_password_info
+        await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(RecoveryPasswordInfoEntity)
+            .values({
+                user_id: userId,
+                code_for_recovery: newUser.recoveryPasswordInformation?.codeForRecovery || null,
+                created_date_recovery_code: newUser.recoveryPasswordInformation?.createdDateRecoveryCode || null,
+            })
+            .execute();
+
+        // Шаг 5: Вставка данных в таблицу ban_info
+        await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(BanInfoEntity)
+            .values({
+                user_id: userId,
+                is_banned: newUser.banInfo?.isBanned || false,
+                ban_date: newUser.banInfo?.banDate || null,
+                ban_reason: newUser.banInfo?.banReason || null,
+            })
+            .execute();
+
+        // Возвращение созданного пользователя
+        const createdUser = await queryRunner.manager
+            .createQueryBuilder(UserEntity, 'user')
+            .select(['user.id', 'user.login', 'user.email', 'user.created_at'])
+            .where('user.id = :id', { id: userId })
+            .getRawOne()
             // Завершение транзакции
             await queryRunner.commitTransaction();
 
-            return createdUser[0]; // Возвращаем первого пользователя из результата (по идее, он один)
+            //View модель только для тестов, потому что в БД лежит Integer, а тесты требуют строку.
+            const viewModel: userViewModel = {
+            id: createdUser.user_id.toString(),
+            email: createdUser.user_email,
+            login: createdUser.user_login,
+            createdAt: createdUser.user_created_at
+          }
+            return viewModel; // Возвращаем первого пользователя из результата (по идее, он один)
+
         } catch (err) {
             // В случае ошибки откатить все изменения
             await queryRunner.rollbackTransaction();
@@ -190,19 +222,40 @@ export class SuperAdminUsersRepositorySql {
             await queryRunner.release();
         }
     }
+
     async createNewPassword(passwordHash: string, passwordSalt: string, recoveryCode: string): Promise<boolean> {
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
+        await queryRunner.startTransaction();
+    
         try {
-            const result = await queryRunner.query(
-                `UPDATE users u
-                 SET password_hash = $1, password_salt = $2
-                 FROM recovery_password_info rpi
-                 WHERE rpi.user_id = u.id AND rpi.code_for_recovery = $3`,
-                [passwordHash, passwordSalt, recoveryCode]
-            );
-            return result[1] > 0; // Returns true if at least one row is modified
+            // Шаг 1: Найти user_id с указанным recoveryCode
+            const recoveryInfo = await queryRunner.manager
+                .createQueryBuilder(RecoveryPasswordInfoEntity, "rpi")
+                .select("rpi.user_id")
+                .where("rpi.code_for_recovery = :recoveryCode", { recoveryCode })
+                .getOne();
+    
+            if (!recoveryInfo) {
+                await queryRunner.rollbackTransaction();
+                return false; // Код восстановления не найден
+            }
+    
+            // Шаг 2: Обновить пароль пользователя с найденным user_id
+            const result = await queryRunner.manager
+                .createQueryBuilder()
+                .update(AccountUserDataEntity)
+                .set({
+                    password_hash: passwordHash,
+                    password_salt: passwordSalt,
+                })
+                .where("id = :userId", { userId: recoveryInfo.user_id })
+                .execute();
+    
+            await queryRunner.commitTransaction();
+            return result.affected > 0; // Возвращает true, если хотя бы одна строка обновлена
         } catch (error) {
+            await queryRunner.rollbackTransaction();
             console.error(error);
             return false;
         } finally {
@@ -210,21 +263,24 @@ export class SuperAdminUsersRepositorySql {
         }
     }
     
+    
     async deleteUser(id: string): Promise<boolean> {
-
         try {
-            const query = `DELETE FROM users WHERE id = $1;`;
-            const result = await this.dataSource.query(query, [id]);
+            const result = await this.dataSource
+                .createQueryBuilder()
+                .delete()
+                .from(UserEntity)
+                .where("id = :id", { id })
+                .execute();
+    
             // Проверяем, был ли удален один пользователь
-            //console.log("Сюда попал", result); // Посмотри, что содержит result
-            return result[1] === 1; // Возвращает true, если удалена одна строка
+            return result.affected === 1; // Возвращает true, если удалена одна строка
         } catch (error) {
-            console.log(error.message)
-            return false
+            console.error(error.message);
+            return false;
         }
-        
-
     }
+    
     async banUser(id: string, reason: string, isBanned: boolean): Promise<boolean> {
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
@@ -277,20 +333,20 @@ export class SuperAdminUsersRepositorySql {
     async confirmationEmail(userId: string, code: string): Promise<boolean> {
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
+        await queryRunner.startTransaction();
+    
         try {
-            await queryRunner.startTransaction();
-            await queryRunner.query(
-                `UPDATE email_confirmation
-                 SET activated_status = true
-                 WHERE user_id = $1`,
-                [userId]
-            );
-            await queryRunner.query(
-                `UPDATE email_confirmation
-                 SET code_for_activated = $2
-                 WHERE user_id = $1`,
-                [userId, code]
-            );
+            // Обновляем сразу два поля в одной транзакции
+            await queryRunner.manager
+                .createQueryBuilder()
+                .update(EmailConfirmationEntity)
+                .set({ 
+                    activated_status: true,
+                    code_for_activated: code 
+                })
+                .where("user_id = :userId", { userId })
+                .execute();
+    
             await queryRunner.commitTransaction();
             return true;
         } catch (error) {
@@ -346,14 +402,15 @@ export class SuperAdminUsersRepositorySql {
         const dateThreshold = sub(new Date(), { seconds: 10 });
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
+    
         try {
-            const result = await queryRunner.query(
-                `SELECT COUNT(*) as count
-                 FROM recovery_password
-                 WHERE ip = $1 AND email_send_date > $2`,
-                [ip, dateThreshold]
-            );
-            return parseInt(result[0].count, 10) <= 5;
+            const count = await queryRunner.manager
+                .createQueryBuilder(RecoveryPasswordEntity, 'recovery_password')
+                .where('recovery_password.ip = :ip', { ip })
+                .andWhere('recovery_password.email_send_date > :dateThreshold', { dateThreshold })
+                .getCount();
+    
+            return count <= 5;
         } catch (error) {
             console.error(error);
             return false;
@@ -366,75 +423,83 @@ export class SuperAdminUsersRepositorySql {
         const dateThreshold = sub(new Date(), { seconds: 10 });
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
+    
         try {
-            const result = await queryRunner.query(
-                `SELECT COUNT(*) as count
-                 FROM new_password
-                 WHERE ip = $1 AND timestamp_new_password > $2`,
-                [ip, dateThreshold]
-            );
-            return parseInt(result[0].count, 10) <= 5;
+            const result = await queryRunner.manager
+                .createQueryBuilder(NewPasswordEntity, 'new_password') // предполагаемое название сущности
+                .where('new_password.ip = :ip', { ip })
+                .andWhere('new_password.timestamp_new_password > :dateThreshold', { dateThreshold })
+                .getCount();
+    
+            return result <= 5;
         } catch (error) {
-            console.error(error);
             return false;
         } finally {
             await queryRunner.release();
         }
     }
     
-    async passwordRecovery(userId: string, code: string): Promise<boolean> {
-        const queryRunner = this.dataSource.createQueryRunner();
-        await queryRunner.connect();
-        try {
-            const result = await queryRunner.query(
-                `UPDATE recovery_password_info
-                 SET code_for_recovery = $1
-                 WHERE user_id = $2`,
-                [code, userId]
-            );
-            return result[1] > 0;
-        } catch (error) {
-            console.error(error);
-            return false;
-        } finally {
-            await queryRunner.release();
-        }
+async passwordRecovery(userId: string, code: string): Promise<boolean> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+        const result = await queryRunner.manager
+            .createQueryBuilder()
+            .update(RecoveryPasswordInfoEntity)
+            .set({ code_for_recovery: code })
+            .where("user_id = :userId", { userId })
+            .execute();
+        await queryRunner.commitTransaction();
+        return result.affected > 0; // Проверка, были ли затронуты строки
+    } catch (error) {
+        await queryRunner.rollbackTransaction();
+        console.error(error);
+        return false;
+    } finally {
+        await queryRunner.release();
     }
+}
+
     
 
     // Эндпоинты для поиска по определенным условиям
-    async findUserByEmail(email: string): Promise<UsersType | null> {
+    async findUserByEmail(email: string): Promise<UserEntity | null> {
         try {
-            const foundUser: UsersType = await this.dataSource.query(`
-    SELECT *
-    FROM users
-    WHERE email = $1
-    `, [email]);
-            return foundUser[0]
+            const foundUser: UserEntity = await this.dataSource
+            .getRepository(UserEntity)
+            .createQueryBuilder('user')
+            .where('user.email = :email', {email})
+            .getOne()
+
+            return foundUser
         } catch (error) {
             return null
         }
     }
-    async findUserById(userId: string): Promise<UsersType | null> {
+    async findUserById(userId: string): Promise<UserEntity | null> {
         try {
-            const foundUser: UsersType = await this.dataSource.query(`
-    SELECT *
-    FROM users
-    WHERE id = $1
-    `, [userId]);
-            return foundUser[0]
+            const foundUser: UserEntity = await this.dataSource
+            .getRepository(UserEntity)
+            .createQueryBuilder('user')
+            .where('user.id = :id', {userId})
+            .getOne()
+
+            return foundUser
         } catch (error) {
             return null
         }
     }
-    async findUserByLogin(login: string): Promise<UsersType | null> {
+    async findUserByLogin(login: string): Promise<UserEntity | null> {
         try {
-            const foundUser: UsersType = await this.dataSource.query(`
-    SELECT *
-    FROM users
-    WHERE login = $1
-    `, [login]);
-            return foundUser[0]
+            const foundUser: UserEntity = await this.dataSource
+            .getRepository(UserEntity)
+            .createQueryBuilder('user')
+            .where('user.login = :login', {login})
+            .getOne()
+
+            return foundUser
         } catch (error) {
             return null
         }
@@ -442,29 +507,31 @@ export class SuperAdminUsersRepositorySql {
     }
 
 
-    async findUserByLoginForMe(login: string): Promise<UsersType | null> {
+    async findUserByLoginForMe(login: string): Promise<UserEntity | null> {
         try {
-            const result = await this.dataSource.query(
-                `SELECT * FROM users WHERE login = $1`,
-                [login]
-            );
-            return result[0] || null;
+            const result = await this.dataSource
+                .getRepository(UserEntity)
+                .createQueryBuilder('user')
+                .where('user.login = :login', { login })
+                .getOne();
+    
+            return result || null;
         } catch (error) {
             console.error(error);
             return null;
         }
     }
     
-    async findUserByConfirmationCode(code: string): Promise<UsersType | null> {
+    async findUserByConfirmationCode(code: string): Promise<UserEntity | null> {
         try {
-            const result = await this.dataSource.query(
-                `SELECT u.* 
-                 FROM users u
-                 JOIN email_confirmation ec ON u.id = ec.user_id
-                 WHERE ec.code_for_activated = $1`,
-                [code]
-            );
-            return result[0] || null;
+            const result = await this.dataSource
+                .getRepository(UserEntity)
+                .createQueryBuilder('u')
+                .innerJoinAndSelect('u.email_confirmation', 'ec')
+                .where('ec.code_for_activated = :code', { code })
+                .getOne();
+    
+            return result || null;
         } catch (error) {
             console.error(error);
             return null;
@@ -472,21 +539,19 @@ export class SuperAdminUsersRepositorySql {
     }
     
     async refreshActivationCode(userId: string, newCode: string): Promise<boolean> {
-        const queryRunner = await this.dataSource.createQueryRunner();
-        await queryRunner.connect();
         try {
-            const result = await queryRunner.query(
-                `UPDATE email_confirmation
-                 SET code_for_activated = $1
-                 WHERE user_id = $2`,
-                [newCode, userId]
-            );
-            return result[1] > 0;
+            const result = await this.dataSource
+                .getRepository(EmailConfirmationEntity)
+                .createQueryBuilder()
+                .update(EmailConfirmationEntity)
+                .set({ code_for_activated: newCode })
+                .where("user_id = :userId", { userId })
+                .execute();
+    
+            return result.affected > 0;
         } catch (error) {
             console.error(error);
             return false;
-        } finally {
-            await queryRunner.release();
         }
     }
     
@@ -560,4 +625,33 @@ export class SuperAdminUsersRepositorySql {
             ],)
         return true
     }
+    async findUserHash(login: string): Promise<UsersType | null> {
+        try {
+            const foundUser: UsersType = await this.dataSource.query(`
+        SELECT *
+        FROM account_user_data
+        LEFT JOIN users ON users.id = account_user_data.user_id
+        WHERE users.login = $1
+    `, [login]);
+            return foundUser[0]
+        } catch (error) {
+            return null
+        }
+}
+async findCode(code: string): Promise<string | null> {
+    try {
+        const result = await this.dataSource.query(
+            `SELECT code_for_activated 
+             FROM email_confirmation
+             WHERE code_for_activated = $1`,
+            [code]
+        );
+
+        // Проверяем, есть ли результаты и возвращаем строку, если она существует
+        return result.length > 0 ? result[0].code_for_activated : null;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
 }

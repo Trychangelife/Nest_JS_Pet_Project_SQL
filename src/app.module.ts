@@ -66,25 +66,6 @@ import { BanInfoEntity } from './entities/users/ban_info.entity';
       ca: fs.readFileSync("./ca.pem").toString()
     }
   }),
-  TypeOrmModule.forFeature([
-    UserEntity,
-    RefreshTokenStorageEntity,
-    PostEntity,
-    BlogEntity,
-    CommentEntity,
-    CommentLikeStorageEntity,
-    CommentDislikeStorageEntity,
-    AccountUserDataEntity,
-    EmailConfirmationEntity,
-    EmailSendDataEntity,
-    NewPasswordEntity,
-    PostsLikeStorageEntity,
-    PostsDislikeStorageEntity,
-    RecoveryPasswordEntity,
-    RecoveryPasswordInfoEntity,
-    BanInfoEntity,
-    
-  ])
 
   // Локальная БД - для прохождения тестов т.к пинг либо оптимизация увеличивает время запроса к БД более 6 сек.
   // TypeOrmModule.forRoot({

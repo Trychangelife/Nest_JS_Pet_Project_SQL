@@ -3,6 +3,8 @@ import { Injectable } from "@nestjs/common"
 import { InjectDataSource } from "@nestjs/typeorm"
 import { sub } from "date-fns"
 import { NewPasswordType, RecoveryPasswordType } from "src/auth/dto/RecoveryPasswordType"
+import { AccountUserDataEntity } from "src/entities/auth/account_user_data.entity"
+import { RecoveryPasswordInfoEntity } from "src/entities/users/recovery_password_info.entity"
 import { BanStatus } from "src/superAdmin/SAblog/dto/banStatus"
 import { UsersType } from "src/users/dto/UsersType"
 import { ConfirmedAttemptDataType, EmailSendDataType, RefreshTokenStorageType } from "src/utils/types"
@@ -28,7 +30,6 @@ export class UsersRepository {
         banStatus?: BanStatus
     ): Promise<object> {
         const queryRunner = this.dataSource.createQueryRunner();
-        console.log(sortDirection)
         try {
             await queryRunner.connect();
     
@@ -188,25 +189,45 @@ export class UsersRepository {
             await queryRunner.release();
         }
     }
-async createNewPassword(passwordHash: string, passwordSalt: string, recoveryCode: string): Promise<boolean> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    try {
-        const result = await queryRunner.query(
-            `UPDATE users u
-             SET password_hash = $1, password_salt = $2
-             FROM recovery_password_info rpi
-             WHERE rpi.user_id = u.id AND rpi.code_for_recovery = $3`,
-            [passwordHash, passwordSalt, recoveryCode]
-        );
-        return result[1] > 0; // Returns true if at least one row is modified
-    } catch (error) {
-        console.error(error);
-        return false;
-    } finally {
-        await queryRunner.release();
+    async createNewPassword(passwordHash: string, passwordSalt: string, recoveryCode: string): Promise<boolean> {
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+    
+        try {
+            // Шаг 1: Найти user_id с указанным recoveryCode
+            const recoveryInfo = await queryRunner.manager
+                .createQueryBuilder(RecoveryPasswordInfoEntity, "rpi")
+                .select("rpi.user_id")
+                .where("rpi.code_for_recovery = :recoveryCode", { recoveryCode })
+                .getOne();
+    
+            if (!recoveryInfo) {
+                await queryRunner.rollbackTransaction();
+                return false; // Код восстановления не найден
+            }
+    
+            // Шаг 2: Обновить пароль пользователя с найденным user_id
+            const result = await queryRunner.manager
+                .createQueryBuilder()
+                .update(AccountUserDataEntity)
+                .set({
+                    password_hash: passwordHash,
+                    password_salt: passwordSalt,
+                })
+                .where("id = :userId", { userId: recoveryInfo.user_id })
+                .execute();
+    
+            await queryRunner.commitTransaction();
+            return result.affected > 0; // Возвращает true, если хотя бы одна строка обновлена
+        } catch (error) {
+            await queryRunner.rollbackTransaction();
+            console.error(error);
+            return false;
+        } finally {
+            await queryRunner.release();
+        }
     }
-}
 async deleteUser(id: string): Promise<boolean> {
 
     try {

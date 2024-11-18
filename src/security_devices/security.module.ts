@@ -8,13 +8,17 @@ import { GetAllDevicesUseCase } from "./application/use-cases/Get_all_devices";
 import { FoundUserByDeviceIdUseCase } from "./application/use-cases/Found_user_by_device_id";
 import { TerminateAllSessionUseCase } from "./application/use-cases/Terminate_all_session";
 import { TerminateSessionByIdUseCase } from "./application/use-cases/Terminate_target_session_by_id";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { RefreshTokenStorageEntity } from "src/entities/auth/refresh_token_storage.entity";
 
 
 
 const useCasesDevices = [GetAllDevicesUseCase, TerminateAllSessionUseCase, TerminateSessionByIdUseCase, FoundUserByDeviceIdUseCase]
 
 @Module({
-    imports: [UsersModule, CqrsModule],
+    imports: [UsersModule, CqrsModule, TypeOrmModule.forFeature([
+      RefreshTokenStorageEntity,
+    ])],
     controllers: [SecurityDeviceController],
     providers: [ SecurityDeviceRepository, ...useCasesDevices,],
     exports: [SecurityDeviceRepository, ...useCasesDevices]

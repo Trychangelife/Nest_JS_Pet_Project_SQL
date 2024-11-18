@@ -7,7 +7,7 @@ import { JwtServiceClass } from "src/guards/jwt.service";
 import { RateLimitGuard } from "src/guards/rate-limit.guard";
 import { UserRegistrationFlow } from "src/guards/users.registration.guard";
 import { UsersService } from "src/users/application/users.service";
-import { UsersType } from "src/users/dto/UsersType";
+import { UsersType, userViewModel } from "src/users/dto/UsersType";
 import { UsersRepository } from "src/users/repositories/users.repository";
 import { isUuid } from "uuidv4";
 import { AuthService } from "./application/auth.service";
@@ -95,7 +95,7 @@ export class AuthController {
     @UseFilters(new HttpExceptionFilter())
     //@UsePipes(new ValidationPipe())
     async registration(@Body() user: AuthForm, @Request() req: { ip: string }, @Res() res) {
-        const result: UsersType | null | boolean = await this.usersService.createUser(user.password, user.login, user.email, req.ip);
+        const result: userViewModel | null | boolean = await this.usersService.createUser(user.password, user.login, user.email, req.ip);
         if (result == false) {
             throw new HttpException("", HttpStatus.BAD_REQUEST)
 
@@ -141,8 +141,8 @@ export class AuthController {
         const checkAttemptEmail = true
         if (checkAttemptEmail) {
             await this.authService.refreshActivationCode(user.email);
-            //const emailResending = await this.emailService.emailConfirmation(user.email);
-            const emailResending = true
+            const emailResending = await this.emailService.emailConfirmation(user.email);
+            //const emailResending = true
 
             //ЗАКОММЕНТИРОВАЛ ЧТОБЫ НЕ ОТПРАВЛЯТЬ ПИСЬМА ПРОСТО ТАК
             if (emailResending) {

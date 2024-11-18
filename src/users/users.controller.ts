@@ -3,7 +3,7 @@ import { AuthForm } from "src/auth/dto/AuthForm_validator";
 import { HttpExceptionFilter } from "src/exception_filters/exception_filter";
 import { BasicAuthGuard } from "src/guards/basic_auth_guard";
 import { UserRegistrationFlow } from "src/guards/users.registration.guard";
-import { UsersType } from "src/users/dto/UsersType";
+import { UsersType, userViewModel } from "src/users/dto/UsersType";
 import { constructorPagination } from "src/utils/pagination.constructor";
 import { UsersService } from "./application/users.service";
 
@@ -26,7 +26,7 @@ export class UsersController {
     @UseGuards(UserRegistrationFlow)
     @UseFilters(new HttpExceptionFilter())
     async createUser(@Body() user: AuthForm,  @Request() req: {ip: string}) {
-        const result: UsersType | boolean = await this.usersService.createUser(user.password, user.login, user.email, req.ip);
+        const result: userViewModel | boolean = await this.usersService.createUser(user.password, user.login, user.email, req.ip);
         if (result == false) {
           throw new BadRequestException([{message: 'Bad email', field: 'Email'}])
         }

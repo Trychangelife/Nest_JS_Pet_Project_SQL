@@ -15,7 +15,7 @@ export class FoundUserByDeviceIdUseCase {
 
     async execute(command: FoundUserByDeviceIdCommand): Promise <string> {
         const foundUserByDeviceId = await this.securityDeviceRepository.foundUserIdByDeviceId(command.deviceId)
-        return foundUserByDeviceId 
+        return foundUserByDeviceId.toString()
     }
 }
 
