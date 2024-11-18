@@ -102,14 +102,14 @@ export class JwtServiceClass {
               device_id: payloadToken.deviceId,
             },
           });
-        
+        console.log("checkToken:", checkToken)
         // const [checkToken] = await this.dataSource.query(`
         //     SELECT * FROM refresh_token_storage
         //     WHERE device_id = $1
         // `, [payloadToken.deviceId]);
 
         //Если приходит undefined - значит токена в базе уже нет, возможно сделали logout, тогда пусть идут входят в систему.
-        if (checkToken !== undefined && rToken !== null) {
+        if (checkToken !== null && rToken !== null) {
             try {
                 const result = this.jwtService.verify(rToken, { secret: process.env.JWT_REFRESH_SECRET });
                 const newAccessToken = await this.accessToken(result);
