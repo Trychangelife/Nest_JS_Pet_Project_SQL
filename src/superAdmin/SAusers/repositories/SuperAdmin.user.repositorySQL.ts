@@ -332,6 +332,7 @@ export class SuperAdminUsersRepositorySql {
     // Основная часть закончена, вспомогательные эндпоинты
     async confirmationEmail(userId: string, code: string): Promise<boolean> {
         const queryRunner = this.dataSource.createQueryRunner();
+        
         await queryRunner.connect();
         await queryRunner.startTransaction();
     
@@ -342,7 +343,7 @@ export class SuperAdminUsersRepositorySql {
                 .update(EmailConfirmationEntity)
                 .set({ 
                     activated_status: true,
-                    code_for_activated: code 
+                    code_for_activated: null // Ставим null т.к активация произошла и далее будем отдавать 400 
                 })
                 .where("user_id = :userId", { userId })
                 .execute();
