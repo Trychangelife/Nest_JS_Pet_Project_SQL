@@ -1,9 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
-import { InjectDataSource } from "@nestjs/typeorm";
+import { InjectDataSource, InjectRepository } from "@nestjs/typeorm";
+import { RefreshTokenStorageEntity } from "src/entities/auth/refresh_token_storage.entity";
 import { UsersType } from "src/users/dto/UsersType";
 import { PayloadType, RefreshTokenStorageType } from "src/utils/types";
-import { DataSource } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 import { uuid } from "uuidv4";
 
 @Injectable()
@@ -11,13 +12,15 @@ export class JwtServiceClass {
 
     constructor(
         @InjectDataSource() protected dataSource: DataSource,
+        @InjectRepository(RefreshTokenStorageEntity)
+        private readonly refreshTokenStorageRepository: Repository<RefreshTokenStorageEntity>,
         protected jwtService: JwtService
     ) { }
 
     async accessToken(user: UsersType) {
         return this.jwtService.sign(
             { id: user.id },
-            { secret: process.env.JWT_SECRET, expiresIn: '10m' }
+            { secret: process.env.JWT_SECRET, expiresIn: '10s' }
         );
     }
 
@@ -28,22 +31,18 @@ export class JwtServiceClass {
         const deviceId = uuid();
         const refreshToken = this.jwtService.sign(
             { id: user.id, deviceId: deviceId },
-            { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20m' }
+            { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20s' }
         );
 
-        const newRefreshTokenForStorage: RefreshTokenStorageType = {
-            userId: user.id,
+        const newRefreshTokenForStorage = {
+            user_id: Number(user.id),
             ip: ip,
             title: titleDevice,
-            lastActiveDate: new Date(),
-            deviceId: deviceId
+            last_activate_date: new Date(),
+            device_id: deviceId
         };
 
-        await this.dataSource.query(`
-          INSERT INTO refresh_token_storage 
-          (user_id, ip, title, device_id, last_activate_date)
-          VALUES ($1, $2, $3, $4, $5)
-      `, [newRefreshTokenForStorage.userId, newRefreshTokenForStorage.ip, newRefreshTokenForStorage.title, newRefreshTokenForStorage.deviceId, newRefreshTokenForStorage.lastActiveDate]);
+        await this.refreshTokenStorageRepository.save(newRefreshTokenForStorage)
 
         return refreshToken;
     }
@@ -51,24 +50,26 @@ export class JwtServiceClass {
     async refreshToken(user: UsersType, ip: string, titleDevice: string, device_id: string, rToken: string): Promise<string> {
 
         // Проверяем наличие устройства для пользователя
-        const [checkDeviceId] = await this.dataSource.query(`
-            SELECT * FROM refresh_token_storage
-            WHERE user_id = $1 AND device_id = $2
-        `, [user.id, device_id]);
+        const checkDeviceId = await this.refreshTokenStorageRepository.findOne({
+            where: {
+              user_id: Number(user.id),
+              device_id: device_id,
+            },
+          });
 
         // Если устройство уже зарегистрировано, обновляем токен
         if (checkDeviceId) {
             const deviceId = checkDeviceId.device_id;
             const refreshToken = this.jwtService.sign(
                 { id: user.id, deviceId: deviceId },
-                { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20m' }
+                { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '20s' }
             );
-
-            await this.dataSource.query(`
-                UPDATE refresh_token_storage
-                SET last_activate_date=$1
-                WHERE user_id=$2 AND device_id=$3
-            `, [new Date(), user.id, deviceId]);
+            
+            await this.refreshTokenStorageRepository.update(
+                { user_id: Number(user.id), device_id: deviceId }, // Критерии поиска
+                { last_activate_date: new Date() }                // Поля для обновления
+              );
+              
             return refreshToken;
         }
     }
@@ -94,11 +95,19 @@ export class JwtServiceClass {
     async getNewAccessToken(rToken: string, ip: string, titleDevice: string): Promise<object | null> {
 
         const payloadToken = await this.getJwtPayload(rToken)
+
+
+        const checkToken = await this.refreshTokenStorageRepository.findOne({
+            where: {
+              device_id: payloadToken.deviceId,
+            },
+          });
         
-        const [checkToken] = await this.dataSource.query(`
-            SELECT * FROM refresh_token_storage
-            WHERE device_id = $1
-        `, [payloadToken.deviceId]);
+        // const [checkToken] = await this.dataSource.query(`
+        //     SELECT * FROM refresh_token_storage
+        //     WHERE device_id = $1
+        // `, [payloadToken.deviceId]);
+
         //Если приходит undefined - значит токена в базе уже нет, возможно сделали logout, тогда пусть идут входят в систему.
         if (checkToken !== undefined && rToken !== null) {
             try {
@@ -118,10 +127,16 @@ export class JwtServiceClass {
 
         try {
             const payloadToken = await this.getJwtPayload(rToken)
-            const result = await this.dataSource.query(`
-                SELECT device_id FROM refresh_token_storage
-                WHERE device_id = $1
-            `, [payloadToken.deviceId]);
+
+            const result = await this.refreshTokenStorageRepository.find({
+                where: {
+                  device_id: payloadToken.deviceId,
+                },
+              });
+            // const result = await this.dataSource.query(`
+            //     SELECT device_id FROM refresh_token_storage
+            //     WHERE device_id = $1
+            // `, [payloadToken.deviceId]);
 
             // Проверяем, если результат пустой, возвращаем null
             if (result.length === 0) {
@@ -138,10 +153,14 @@ export class JwtServiceClass {
     async deleteTokenFromData(rToken: string): Promise<void> {
         try {
             const payloadToken = await this.getJwtPayload(rToken)
-            await this.dataSource.query(`
-                DELETE FROM refresh_token_storage
-                WHERE device_id = $1
-            `, [payloadToken.deviceId]);
+
+            await this.refreshTokenStorageRepository.delete(
+                {device_id: payloadToken.deviceId}
+            )
+            // await this.dataSource.query(`
+            //     DELETE FROM refresh_token_storage
+            //     WHERE device_id = $1
+            // `, [payloadToken.deviceId]);
         } catch (error) {
             // Можно добавить обработку ошибок, если это нужно
             console.error("Error deleting token:", error);

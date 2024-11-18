@@ -15,8 +15,8 @@ export class RefreshTokenStorageEntity {
     @Column()
     device_id:string;
 
-    @Column()
-    last_activate_date:string
+    @CreateDateColumn({ type: 'timestamptz', name: 'last_activate_date' })
+    last_activate_date:Date
 
     @Column()
     user_id: number

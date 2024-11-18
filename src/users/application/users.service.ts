@@ -39,7 +39,7 @@ export class UsersService {
             }
             else {  
                 const createdUser = await this.usersRepository.createUser(newUser)
-                this.emailService.emailConfirmation(newUser.email) // Отвечает за рассылку кода
+                //this.emailService.emailConfirmation(newUser.email) // Отвечает за рассылку кода
                 return createdUser
             }
         } 
