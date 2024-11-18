@@ -484,7 +484,7 @@ async passwordRecovery(userId: string, code: string): Promise<boolean> {
             const foundUser: UserEntity = await this.dataSource
             .getRepository(UserEntity)
             .createQueryBuilder('user')
-            .where('user.id = :id', {userId})
+            .where('user.id = :userId', {userId})
             .getOne()
 
             return foundUser
