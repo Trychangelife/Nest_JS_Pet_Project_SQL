@@ -24,7 +24,7 @@ export class BlogEntity {
   @Column({ type: 'varchar', nullable: true })
   owner_user_login: string;
   
-  @Column({ name: 'owner_user_id' })
+  @Column({ name: 'owner_user_id', nullable: true})
   owner_user_id: number;
   
   // Связь с владельцем (пользователем)

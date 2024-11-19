@@ -1,35 +1,20 @@
 import { Injectable } from "@nestjs/common"
-import { InjectDataSource } from "@nestjs/typeorm"
+import { InjectDataSource, InjectRepository } from "@nestjs/typeorm"
 import { BlogsType } from "src/blogs/dto/BlogsType"
 import { CommentsType, CommentsTypeView } from "src/comments/dto/CommentsType"
+import { PostEntity } from "src/entities/posts/posts.entity"
 import { PostsType, PostsTypeView } from "src/posts/dto/PostsType"
 import { LIKES } from "src/utils/types"
-import { DataSource } from "typeorm"
+import { DataSource, Repository } from "typeorm"
 
-export const postViewModel = {
-    _id: 0,
-    id: 1,
-    title: 1,
-    shortDescription: 1,
-    content: 1,
-    bloggerId: 1,
-    bloggerName: 1,
-    addedAt: 1,
-    extendedLikesInfo: 1,
-}
-
-export const commentsVievModel = {
-    _id: 0,
-    postId: 0,
-    __v: 0,
-    likeStorage: 0,
-    dislikeStorage: 0
-}
 
 @Injectable()
 export class PostsRepositorySql {
 
-    constructor(@InjectDataSource() protected dataSource: DataSource) {
+    constructor(@InjectDataSource() protected dataSource: DataSource,
+        @InjectRepository(PostEntity)
+        private readonly postRepo: Repository<PostEntity>
+    ) {
 
     }
     async allPosts(
@@ -144,34 +129,35 @@ export class PostsRepositorySql {
 
     async releasePost(newPosts: PostsType, foundBlog: BlogsType): Promise<PostsTypeView | null> {
 
-        const postAfterCreated: PostsType = await this.dataSource.query(`
-    INSERT INTO "posts" (title, "short_description", content, "blog_id", "blog_name", "created_at", "author_user_id")
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING *
-    `, [newPosts.title, newPosts.shortDescription, newPosts.content, foundBlog.id, foundBlog.name, newPosts.createdAt, foundBlog.owner_user_id])
+        // Создаем и сохраняем пост в базе данных
+        const savedPost = await this.postRepo.save({
+            title: newPosts.title,
+            short_description: newPosts.shortDescription,
+            content: newPosts.content,
+            blog_id: foundBlog.id,
+            blog_name: foundBlog.name,
+            created_at: newPosts.createdAt,
+            author_user_id: foundBlog.owner_user_id,
+        });
 
-
+        // Формируем view-модель для ответа
         const postViewModel: PostsTypeView = {
-            id: postAfterCreated[0].id.toString(),
-            title: postAfterCreated[0].title,
-            shortDescription: postAfterCreated[0].short_description,
-            content: postAfterCreated[0].content,
-            blogId: postAfterCreated[0].blog_id.toString(),
-            blogName: postAfterCreated[0].blog_name,
-            createdAt: postAfterCreated[0].created_at,
+            id: savedPost.id.toString(),
+            title: savedPost.title,
+            shortDescription: savedPost.short_description,
+            content: savedPost.content,
+            blogId: savedPost.blog_id.toString(),
+            blogName: savedPost.blog_name,
+            createdAt: savedPost.created_at,
             extendedLikesInfo: {
                 likesCount: 0,
                 dislikesCount: 0,
                 myStatus: LIKES.NONE,
-                newestLikes: []
-            }
-        }
-        if (postAfterCreated !== null) {
-            return postViewModel
-        }
-        else {
-            return null
-        }
+                newestLikes: [],
+            },
+        };
+
+        return postViewModel;
     }
 
 

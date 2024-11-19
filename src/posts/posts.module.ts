@@ -14,12 +14,16 @@ import { GetSinglePostUseCase } from "./application/use-cases/get_single_post";
 import { LikeDislikeForPostUseCase } from "./application/use-cases/like_dislike_for_post";
 import { UpdatePostUseCase } from "./application/use-cases/update_post";
 import { CqrsModule } from "@nestjs/cqrs";
+import { PostEntity } from "src/entities/posts/posts.entity";
+import { TypeOrmModule } from "@nestjs/typeorm";
 
 const useCasesPosts = [GetAllPostsUseCase, GetSinglePostUseCase, GetAllPostsSpecificBlogUseCase, CreatePostUseCase, UpdatePostUseCase, DeletePostUseCase, CreateCommentForSpecificPostUseCase, GetCommentByPostIdUseCase, LikeDislikeForPostUseCase]
 
 
 @Module({
-    imports: [BlogsModule, UsersModule, CqrsModule],
+    imports: [BlogsModule, UsersModule, CqrsModule, TypeOrmModule.forFeature([
+      PostEntity,
+    ])],
     controllers: [PostController],
     providers: [ PostsService, PostsRepositorySql, ...useCasesPosts],
     exports: [PostsService, PostsRepositorySql]
