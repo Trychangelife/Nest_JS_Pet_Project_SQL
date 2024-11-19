@@ -106,11 +106,11 @@ export class PostsRepositorySql {
             pageSize: limit,
             totalCount,
             items: getAllPosts.map(post => ({
-                id: post.id.toString(),
+                id: post.id?.toString(),
                 title: post.title,
                 shortDescription: post.shortDescription,
                 content: post.content,
-                blogId: post.blogId.toString(),
+                blogId: post.blogId?.toString(),
                 blogName: post.blogName,
                 createdAt: post.createdAt,
                 extendedLikesInfo: {
@@ -119,7 +119,7 @@ export class PostsRepositorySql {
                     myStatus: post.myStatus,
                     newestLikes: post.newestLikes.map(like => ({
                         addedAt: like.addedAt,
-                        userId: like.userId.toString(), // Конвертируем userId в строку
+                        userId: like.userId?.toString(), // Конвертируем userId в строку
                         login: like.login
                     })).slice(0, 3) // последние 3 лайка
                 },
@@ -142,11 +142,11 @@ export class PostsRepositorySql {
 
         // Формируем view-модель для ответа
         const postViewModel: PostsTypeView = {
-            id: savedPost.id.toString(),
+            id: savedPost.id?.toString(),
             title: savedPost.title,
             shortDescription: savedPost.short_description,
             content: savedPost.content,
-            blogId: savedPost.blog_id.toString(),
+            blogId: savedPost.blog_id?.toString(),
             blogName: savedPost.blog_name,
             createdAt: savedPost.created_at,
             extendedLikesInfo: {
@@ -258,7 +258,6 @@ export class PostsRepositorySql {
                 `,
                 [postId, userId]
             );
-                    console.log(post)
             // Проверка, найден ли пост
             if (post) {
                 const postViewModel: PostsTypeView = {
@@ -266,7 +265,7 @@ export class PostsRepositorySql {
                     title: post.title,
                     shortDescription: post.shortDescription,
                     content: post.content,
-                    blogId: post.blogId?.toString(),
+                    blogId: post.blogId?.toString() || "blogId not found",
                     blogName: post.blogName,
                     createdAt: post.createdAt,
                     extendedLikesInfo: {
@@ -316,10 +315,10 @@ export class PostsRepositorySql {
 
 
             const commentViewModel: CommentsTypeView = {
-                id: commentAfterCreated[0].id.toString(),
+                id: commentAfterCreated[0].id?.toString(),
                 content: commentAfterCreated[0].content,
                 commentatorInfo: {
-                    userId: commentAfterCreated[0].author_user_id.toString(),
+                    userId: commentAfterCreated[0].author_user_id?.toString(),
                     userLogin: commentAfterCreated[0].author_login_id
                 },
                 createdAt: commentAfterCreated[0].created_at,
@@ -426,10 +425,10 @@ export class PostsRepositorySql {
             pageSize: limit,
             totalCount,
             items: getAllComments.map(e => ({
-                id: e.id.toString(),
+                id: e.id?.toString(),
                 content: e.content,
                 commentatorInfo: {
-                    userId: e.userId.toString(),
+                    userId: e.userId?.toString(),
                     userLogin: e.userLogin
                 },
                 createdAt: e.createdAt,
