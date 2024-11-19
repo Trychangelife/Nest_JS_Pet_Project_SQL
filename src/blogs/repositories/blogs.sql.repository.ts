@@ -208,7 +208,7 @@ export class BlogsRepositorySql {
             })
             if (blog !== null) {
                 const resultView: BlogsTypeView = {
-                    id: blog.id.toString(),
+                    id: blog.id?.toString(),
                     name: blog.name,
                     description: blog.description,
                     websiteUrl: blog.website_url,
@@ -277,7 +277,7 @@ export class BlogsRepositorySql {
         await this.blogRepo.save(bloggerAfterCreate);
 
         const resultView: BlogsTypeView = {
-            id: bloggerAfterCreate.id.toString(),
+            id: bloggerAfterCreate.id?.toString(),
             name: bloggerAfterCreate.name,
             description: bloggerAfterCreate.description,
             websiteUrl: bloggerAfterCreate.website_url,

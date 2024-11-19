@@ -258,15 +258,15 @@ export class PostsRepositorySql {
                 `,
                 [postId, userId]
             );
-
+                    console.log(post)
             // Проверка, найден ли пост
             if (post) {
                 const postViewModel: PostsTypeView = {
-                    id: post.id.toString(),
+                    id: post.id?.toString(),
                     title: post.title,
                     shortDescription: post.shortDescription,
                     content: post.content,
-                    blogId: post.blogId.toString(),
+                    blogId: post.blogId?.toString(),
                     blogName: post.blogName,
                     createdAt: post.createdAt,
                     extendedLikesInfo: {
@@ -275,7 +275,7 @@ export class PostsRepositorySql {
                         myStatus: post.myStatus, // всегда "None"
                         newestLikes: post.newestLikes.map(like => ({
                             addedAt: like.addedAt,
-                            userId: like.userId.toString(), // Конвертируем userId в строку
+                            userId: like.userId?.toString(), // Конвертируем userId в строку
                             login: like.login
                         })).slice(0, 3) // последние 3 лайка
                     }
