@@ -23,9 +23,12 @@ export class BlogEntity {
 
   @Column({ type: 'varchar', nullable: true })
   owner_user_login: string;
-
+  
+  @Column({ name: 'owner_user_id' })
+  owner_user_id: number;
+  
   // Связь с владельцем (пользователем)
   @ManyToOne(() => UserEntity, (user) => user.id, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'owner_user_id' })
-  owner_user_id: UserEntity;
+  owner_user: UserEntity;
 }

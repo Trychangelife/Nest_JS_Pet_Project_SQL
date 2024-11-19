@@ -16,7 +16,7 @@ export class CreateBlogUseCase {
 
     async execute(command: CreateBlogCommand): Promise<BlogsTypeView | null> {
         // Построено на классе
-        const newBlogs = new BlogsClass(1, command.name, command.description, command.websiteUrl, (new Date()).toISOString(), false, null, null)
+        const newBlogs = new BlogsClass(1, command.name, command.description, command.websiteUrl, (new Date()), false, null, null)
         const createdBlogs = await this.bloggerRepository.createBlogger(newBlogs)
         return createdBlogs
     }

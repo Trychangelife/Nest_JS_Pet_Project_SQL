@@ -9,12 +9,16 @@ import { DeleteBlogUseCase } from "src/superAdmin/SAblog/application/use-cases/d
 import { UpdateBlogUseCase } from "src/superAdmin/SAblog/application/use-cases/update_blog";
 import { GetAllBlogsUseCase, GetAllBlogsCommand } from "./application/use-cases/get_all_blogs";
 import { GetTargetBlogUseCase } from "./application/use-cases/get_target_blog";
+import { BlogEntity } from "src/entities/blog/blog.entity";
+import { TypeOrmModule } from "@nestjs/typeorm";
 
 
 const useCasesBlogs = [GetAllBlogsUseCase, GetTargetBlogUseCase, CreateBlogUseCase, UpdateBlogUseCase, DeleteBlogUseCase, GetAllBlogsCommand]
 
 @Module({
-    imports: [forwardRef(() => UsersModule), CqrsModule],
+    imports: [forwardRef(() => UsersModule), CqrsModule, TypeOrmModule.forFeature([
+      BlogEntity,
+    ])],
     controllers: [BlogsController],
     providers: [ BlogsService,BlogsRepositorySql, ...useCasesBlogs],
     exports: [BlogsService,BlogsRepositorySql,]

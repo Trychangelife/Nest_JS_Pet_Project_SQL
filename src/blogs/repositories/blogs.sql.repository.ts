@@ -1,13 +1,18 @@
 import { Injectable } from "@nestjs/common"
-import { InjectDataSource } from "@nestjs/typeorm"
+import { InjectDataSource, InjectRepository } from "@nestjs/typeorm"
 import { BlogsType, BlogsTypeView } from "src/blogs/dto/BlogsType"
-import { DataSource } from "typeorm"
+import { BlogEntity } from "src/entities/blog/blog.entity";
+import { DataSource, Repository } from "typeorm"
 
 
 @Injectable()
 export class BlogsRepositorySql {
 
-    constructor(@InjectDataSource() protected dataSource: DataSource) {
+    constructor(
+        @InjectDataSource() protected dataSource: DataSource,
+        @InjectRepository(BlogEntity)
+        private readonly blogRepo: Repository<BlogEntity>
+    ) {
 
     }
 
@@ -20,33 +25,33 @@ export class BlogsRepositorySql {
         sortDirection: string = 'desc'
     ): Promise<object> {
 
-// Базовый SQL-запрос и дополнительные параметры
-const searchCondition = searchNameTerm ? `WHERE name ILIKE $1` : '';
-const queryParams = searchNameTerm ? [`%${searchNameTerm}%`, limit, offset] : [limit, offset];
+        // Базовый SQL-запрос и дополнительные параметры
+        const searchCondition = searchNameTerm ? `WHERE name ILIKE $1` : '';
+        const queryParams = searchNameTerm ? [`%${searchNameTerm}%`, limit, offset] : [limit, offset];
 
-// Запрос для общего количества блогов с учетом условия поиска
-const [totalCountResult] = await this.dataSource.query(
-    `
+        // Запрос для общего количества блогов с учетом условия поиска
+        const [totalCountResult] = await this.dataSource.query(
+            `
     SELECT COUNT(*)::int AS count 
     FROM "blog" 
     ${searchCondition}
     `,
-    searchNameTerm ? [`%${searchNameTerm}%`] : []
-);
-const totalCount = parseInt(totalCountResult.count, 10);
-const pagesCount = Math.ceil(totalCount / limit);
+            searchNameTerm ? [`%${searchNameTerm}%`] : []
+        );
+        const totalCount = parseInt(totalCountResult.count, 10);
+        const pagesCount = Math.ceil(totalCount / limit);
 
-// Основной SQL-запрос для получения блогов с учетом параметров
-const getAllBlog = await this.dataSource.query(
-    `
+        // Основной SQL-запрос для получения блогов с учетом параметров
+        const getAllBlog = await this.dataSource.query(
+            `
     SELECT * 
     FROM "blog"
     ${searchCondition}
     ORDER BY ${sortBy} ${sortDirection}
     LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}
     `,
-    queryParams
-);
+            queryParams
+        );
 
 
         // Возвращаем форматированный объект
@@ -66,46 +71,46 @@ const getAllBlog = await this.dataSource.query(
         };
     }
 
-//---------------------------------------------------------------------------
+    //---------------------------------------------------------------------------
 
 
-async allPostsSpecificBlogger(
-    blogId: string, 
-    offset: number = 0, 
-    limit: number = 10, 
-    pageNumber: number = 1, 
-    sortBy: string = 'created_at',
-    sortDirection: string = 'desc',
-    userId?: number
-): Promise<object | null> {
-    // Объект для сопоставления значений сортировки с фактическими именами столбцов
-    const sortFieldMap = {
-        title: 'title',
-        created_at: 'created_at',
-        blog_id: 'blog_id',
-        blogName: 'blog_name'
-    };
+    async allPostsSpecificBlogger(
+        blogId: string,
+        offset: number = 0,
+        limit: number = 10,
+        pageNumber: number = 1,
+        sortBy: string = 'created_at',
+        sortDirection: string = 'desc',
+        userId?: number
+    ): Promise<object | null> {
+        // Объект для сопоставления значений сортировки с фактическими именами столбцов
+        const sortFieldMap = {
+            title: 'title',
+            created_at: 'created_at',
+            blog_id: 'blog_id',
+            blogName: 'blog_name'
+        };
 
-    // Список допустимых направлений сортировки
-    const allowedSortDirections = ['asc', 'desc'];
+        // Список допустимых направлений сортировки
+        const allowedSortDirections = ['asc', 'desc'];
 
-    // Проверка значений sortBy и sortDirection
-    const sortField = sortFieldMap[sortBy] || 'created_at';
-    const order = allowedSortDirections.includes(sortDirection.toLowerCase()) ? sortDirection.toUpperCase() : 'DESC';
+        // Проверка значений sortBy и sortDirection
+        const sortField = sortFieldMap[sortBy] || 'created_at';
+        const order = allowedSortDirections.includes(sortDirection.toLowerCase()) ? sortDirection.toUpperCase() : 'DESC';
 
-    // Проверка существования блога
-    const checkBloggerExist = await this.dataSource.query(`SELECT COUNT(*)::int as count FROM "blog" WHERE id = $1`, [blogId]);
-    if (checkBloggerExist[0].count < 1) {
-        return null; 
-    }
+        // Проверка существования блога
+        const checkBloggerExist = await this.dataSource.query(`SELECT COUNT(*)::int as count FROM "blog" WHERE id = $1`, [blogId]);
+        if (checkBloggerExist[0].count < 1) {
+            return null;
+        }
 
-    // Получаем общее количество постов для данного блога
-    const [{ count: totalCount }] = await this.dataSource.query(`SELECT COUNT(*)::int AS count FROM "posts" WHERE blog_id = $1`, [blogId]);
-    const pagesCount = Math.ceil(totalCount / limit);
+        // Получаем общее количество постов для данного блога
+        const [{ count: totalCount }] = await this.dataSource.query(`SELECT COUNT(*)::int AS count FROM "posts" WHERE blog_id = $1`, [blogId]);
+        const pagesCount = Math.ceil(totalCount / limit);
 
-    // Основной запрос на получение постов с лайками и дизлайками
-    const getAllPosts = await this.dataSource.query(
-        `
+        // Основной запрос на получение постов с лайками и дизлайками
+        const getAllPosts = await this.dataSource.query(
+            `
         SELECT 
             p.id,
             p.title,
@@ -155,36 +160,36 @@ async allPostsSpecificBlogger(
         ORDER BY ${sortField} ${order}
         LIMIT $2 OFFSET $3
         `,
-        [blogId, limit, offset, userId]
-    );
+            [blogId, limit, offset, userId]
+        );
 
-    // Форматируем вывод
-    return {
-        pagesCount,
-        page: pageNumber,
-        pageSize: limit,
-        totalCount,
-        items: getAllPosts.map(post => ({
-            id: post.id.toString(),
-            title: post.title,
-            shortDescription: post.shortDescription,
-            content: post.content,
-            blogId: post.blogId.toString(),
-            blogName: post.blogName,
-            createdAt: post.createdAt,
-            extendedLikesInfo: {
-                likesCount: Number(post.likesCount),
-                dislikesCount: Number(post.dislikesCount),
-                myStatus: post.myStatus, // всегда "None"
-                newestLikes: post.newestLikes.map(like => ({
-                    addedAt: like.addedAt,
-                    userId: like.userId.toString(), // Конвертируем userId в строку
-                    login: like.login
-                })).slice(0, 3) // последние 3 лайка // последние 3 лайка
-            },
-        }))
-    };
-}
+        // Форматируем вывод
+        return {
+            pagesCount,
+            page: pageNumber,
+            pageSize: limit,
+            totalCount,
+            items: getAllPosts.map(post => ({
+                id: post.id.toString(),
+                title: post.title,
+                shortDescription: post.shortDescription,
+                content: post.content,
+                blogId: post.blogId.toString(),
+                blogName: post.blogName,
+                createdAt: post.createdAt,
+                extendedLikesInfo: {
+                    likesCount: Number(post.likesCount),
+                    dislikesCount: Number(post.dislikesCount),
+                    myStatus: post.myStatus, // всегда "None"
+                    newestLikes: post.newestLikes.map(like => ({
+                        addedAt: like.addedAt,
+                        userId: like.userId.toString(), // Конвертируем userId в строку
+                        login: like.login
+                    })).slice(0, 3) // последние 3 лайка // последние 3 лайка
+                },
+            }))
+        };
+    }
 
 
     // Возвращаем блог для внешних ресурсов, VIEW версия
@@ -192,11 +197,15 @@ async allPostsSpecificBlogger(
 
 
         try {
-            const [blog] = await this.dataSource.query(
-                `
-            SELECT * 
-            FROM "blog" WHERE id = $1
-                `, [id])
+            // const [blog] = await this.dataSource.query(
+            //     `
+            // SELECT * 
+            // FROM "blog" WHERE id = $1
+            //     `, [id])
+
+            const blog = await this.blogRepo.findOneBy({
+                id: Number(id)
+            })
             if (blog !== null) {
                 const resultView: BlogsTypeView = {
                     id: blog.id.toString(),
@@ -218,38 +227,54 @@ async allPostsSpecificBlogger(
 
     }
 
-        // Возвращаем блог для внутренних запросов, FULL ADMIN версия
-        async targetBlogAdmin(id: string, userId?: string): Promise<BlogsType | null> {
+    // Возвращаем блог для внутренних запросов, FULL ADMIN версия
+    async targetBlogAdmin(id: string, userId?: string): Promise<BlogsType | null> {
 
 
-            try {
-                const [blog] = await this.dataSource.query(
-                    `
-                SELECT * 
-                FROM "blog" WHERE id = $1
-                    `, [id])
-                if (blog !== null) {
-                    return blog
-                }
-                else {
-                    return null
-                }
-            } catch (error) {
+        try {
+            // const [blog] = await this.dataSource.query(
+            //     `
+            // SELECT * 
+            // FROM "blog" WHERE id = $1
+            //     `, [id])
+
+            const blog = await this.blogRepo.findOneBy({
+                id: Number(id)
+            })
+            if (blog !== null) {
+                return blog
+            }
+            else {
                 return null
             }
-    
-    
+        } catch (error) {
+            return null
         }
+
+
+    }
 
 
     async createBlogger(newBlogger: BlogsType): Promise<BlogsTypeView | null> {
 
 
-        const [bloggerAfterCreate] = await this.dataSource.query(`
-        INSERT INTO "blog" (name, "website_url", description, created_at)
-        VALUES ($1, $2, $3, $4)
-        RETURNING *
-        `, [newBlogger.name, newBlogger.website_url, newBlogger.description, newBlogger.created_at])
+        // const [bloggerAfterCreate] = await this.dataSource.query(`
+        // INSERT INTO "blog" (name, "website_url", description, created_at)
+        // VALUES ($1, $2, $3, $4)
+        // RETURNING *
+        // `, [newBlogger.name, newBlogger.website_url, newBlogger.description, newBlogger.created_at])
+
+
+        // Создаем новую сущность
+        const bloggerAfterCreate = this.blogRepo.create({
+            name: newBlogger.name,
+            website_url: newBlogger.website_url,
+            description: newBlogger.description,
+            created_at: newBlogger.created_at,
+        });
+
+        // Сохраняем сущность в базе данных
+        await this.blogRepo.save(bloggerAfterCreate);
 
         const resultView: BlogsTypeView = {
             id: bloggerAfterCreate.id.toString(),
@@ -269,53 +294,51 @@ async allPostsSpecificBlogger(
         websiteUrl: string,
         description: string
     ): Promise<boolean> {
-
-        const existingBlog = await this.dataSource.query(
-            `SELECT id FROM "blog" WHERE id = $1`,
-            [id]
-        );
-
-        if (existingBlog.length === 0) {
-            // Если блог с указанным id не найден, возвращаем false сразу
+        // Проверяем, существует ли блог с указанным ID
+        const existingBlog = await this.blogRepo.findOne({ where: { id: Number(id) } });
+    
+        if (!existingBlog) {
+            // Если блог с указанным id не найден, возвращаем false
             return false;
         }
-
-        // Выполняем обновление, если объект найден
-        const updatedBlogs = await this.dataSource.query(
-            `
-            UPDATE "blog"
-            SET name = $2, website_url = $3, description = $4
-            WHERE id = $1
-            RETURNING *
-            `,
-            [id, name, websiteUrl, description]
-        );
-
-        return updatedBlogs.length > 0;
-
+    
+        // Обновляем поля блога
+        existingBlog.name = name;
+        existingBlog.website_url = websiteUrl;
+        existingBlog.description = description;
+    
+        // Сохраняем изменения
+        await this.blogRepo.save(existingBlog);
+    
+        return true;
     }
+    
 
 
     async deleteBlogger(id: string): Promise<boolean> {
-        const findUserAfterDelete = await this.dataSource.query(`SELECT id, name, website_url FROM "blog" WHERE id = $1`, [id])
-        if (findUserAfterDelete.length < 1) {
-            return false
+        // Проверяем, существует ли блог с указанным ID
+        const existingBlog = await this.blogRepo.findOne({ where: { id: Number(id) } });
+    
+        if (!existingBlog) {
+            // Если блог не найден, возвращаем false
+            return false;
         }
-        else {
-            await this.dataSource.query(`DELETE FROM "blog" WHERE id = $1`, [id])
-            return true
-        }
+    
+        // Удаляем блог
+        await this.blogRepo.remove(existingBlog);
+        return true;
     }
+    
 
-    async deleteAllBlogger(): Promise<boolean> {
-        await this.dataSource.query(`TRUNCATE TABLE "blog"`)
-        const checkTableAfterFullClear = await this.dataSource.query(`SELECT COUNT(*) FROM "blog"`)
-        if (checkTableAfterFullClear > 1) {
-            return false
-        }
-        else {
-            return true
-        }
+    // async deleteAllBlogger(): Promise<boolean> {
+    //     await this.dataSource.query(`TRUNCATE TABLE "blog"`)
+    //     const checkTableAfterFullClear = await this.dataSource.query(`SELECT COUNT(*) FROM "blog"`)
+    //     if (checkTableAfterFullClear > 1) {
+    //         return false
+    //     }
+    //     else {
+    //         return true
+    //     }
 
-    }
+    // }
 }
