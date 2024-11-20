@@ -127,37 +127,6 @@ export class PostsRepositorySql {
         };
     }
 
-    // async releasePost(newPosts: PostsType, foundBlog: BlogsType): Promise<PostsTypeView | null> {
-
-    //     const postAfterCreated: PostsType = await this.dataSource.query(`
-    //     INSERT INTO "posts" (title, "short_description", content, "blog_id", "blog_name", "created_at", "author_user_id")
-    //     VALUES ($1, $2, $3, $4, $5, $6, $7)
-    //     RETURNING *
-    //     `, [newPosts.title, newPosts.shortDescription, newPosts.content, foundBlog.id, foundBlog.name, newPosts.createdAt, foundBlog.owner_user_id])
-    
-    //         const postViewModel: PostsTypeView = {
-    //             id: postAfterCreated[0]?.id.toString(),
-    //             title: postAfterCreated[0].title,
-    //             shortDescription: postAfterCreated[0].short_description,
-    //             content: postAfterCreated[0].content,
-    //             blogId: postAfterCreated[0]?.blog_id.toString(),
-    //             blogName: postAfterCreated[0].blog_name,
-    //             createdAt: postAfterCreated[0].created_at,
-    //             extendedLikesInfo: {
-    //                 likesCount: 0,
-    //                 dislikesCount: 0,
-    //                 myStatus: LIKES.NONE,
-    //                 newestLikes: []
-    //             }
-    //         }
-    //         if (postAfterCreated !== null) {
-    //             return postViewModel
-    //         }
-    //         else {
-    //             return null
-    //         }
-    // }
-
     async releasePost(newPosts: PostsType, foundBlog: BlogsType): Promise<PostsTypeView | null> {
         // Создаем и сохраняем новый пост в базе данных
         const savedPost = await this.postRepo.save({
@@ -169,9 +138,6 @@ export class PostsRepositorySql {
             created_at: newPosts.createdAt,
             author_user_id: foundBlog.owner_user_id,
         });
-        console.log("BLOGID", foundBlog.id)
-        const takePost = await this.postRepo.findOneBy({id: savedPost.id})
-        console.log("ReleasePost: ", savedPost, takePost)
         // Формируем view-модель для ответа
         const postViewModel: PostsTypeView = {
             id: savedPost.id?.toString() ?? '', // Обрабатываем возможный null
@@ -193,46 +159,81 @@ export class PostsRepositorySql {
     }
     
 
+    // async changePost(
+    //     postId: string,
+    //     title: string,
+    //     shortDescription: string,
+    //     content: string,
+    //     blogId: string
+    // ): Promise<boolean | null> {
+
+    //     const [existingBlog] = await this.dataSource.query(
+    //         `
+    //     SELECT posts.*, blog.*
+    //     FROM "posts"
+    //     JOIN "blog" ON posts.blog_id = blog.id
+    //     WHERE posts.id = $1 AND blog_id = $2
+    //     `, [postId, blogId]
+    //     );
+
+    //     if (!existingBlog) {
+    //         // Если пост с указанным id не найден, возвращаем false
+    //         return false;
+    //     }
+
+    //     // Выполняем обновление, если объект найден
+    //     const [updatedPost] = await this.dataSource.query(
+    //         `
+    //     UPDATE "posts"
+    //     SET title = $2, short_description = $3, content = $4
+    //     WHERE id = $1
+    //     RETURNING *
+    //     `,
+    //         [postId, title, shortDescription, content]
+    //     );
+
+    //     // Проверяем, что обновление действительно произошло
+    //     if (!updatedPost) {
+    //         // Если `updatedPost` пустой, значит, обновление не было выполнено
+    //         return false;
+    //     }
+
+    //     return true;  // Возвращаем `true`, если изменения были успешно применены
+    // }
+
     async changePost(
         postId: string,
         title: string,
         shortDescription: string,
         content: string,
         blogId: string
-    ): Promise<boolean | null> {
-
-        const [existingBlog] = await this.dataSource.query(
-            `
-        SELECT posts.*, blog.*
-        FROM "posts"
-        JOIN "blog" ON posts.blog_id = blog.id
-        WHERE posts.id = $1 AND blog_id = $2
-        `, [postId, blogId]
-        );
-
-        if (!existingBlog) {
-            // Если пост с указанным id не найден, возвращаем false
+    ): Promise<boolean> {
+        // Проверяем существование поста и соответствующего блога
+        const existingPost = await this.postRepo.findOne({
+            where: {
+                id: +postId,
+                blog_id: +blogId,
+            },
+            relations: ['blog'], // Если нужна дополнительная информация о блоге
+        });
+    
+        if (!existingPost) {
+            // Если пост с указанным id и blog_id не найден, возвращаем false
             return false;
         }
-
-        // Выполняем обновление, если объект найден
-        const [updatedPost] = await this.dataSource.query(
-            `
-        UPDATE "posts"
-        SET title = $2, short_description = $3, content = $4
-        WHERE id = $1
-        RETURNING *
-        `,
-            [postId, title, shortDescription, content]
+    
+        // Выполняем обновление полей
+        const updateResult = await this.postRepo.update(
+            { id: +postId },
+            {
+                title,
+                short_description: shortDescription,
+                content,
+            }
         );
-
-        // Проверяем, что обновление действительно произошло
-        if (!updatedPost) {
-            // Если `updatedPost` пустой, значит, обновление не было выполнено
-            return false;
-        }
-
-        return true;  // Возвращаем `true`, если изменения были успешно применены
+    
+        // Проверяем, было ли обновлено хотя бы одно поле
+        return updateResult.affected > 0;
     }
 
     async targetPost(postId: string, userId?: number): Promise<PostsTypeView | null> {
