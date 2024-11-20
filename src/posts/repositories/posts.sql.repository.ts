@@ -279,17 +279,6 @@ export class PostsRepositorySql {
         }
     }
 
-
-    // async deletePost(deletePostId: string, blogId: string): Promise<boolean> {
-    //     const findPostBeforeDelete = await this.dataSource.query(`SELECT * FROM "posts" WHERE id = $1 AND blog_id = $2`, [deletePostId, blogId])
-    //     if (findPostBeforeDelete.length < 1) {
-    //         return false
-    //     }
-    //     else {
-    //         await this.dataSource.query(`DELETE FROM "posts" WHERE id = $1 AND blog_id = $2`, [deletePostId, blogId])
-    //         return true
-    //     }
-    // }
     async deletePost(deletePostId: string, blogId: string): Promise<boolean> {
         // Проверяем существование поста с указанным `deletePostId` и `blogId`
         const existingPost = await this.postRepo.findOne({
@@ -310,7 +299,7 @@ export class PostsRepositorySql {
         // Проверяем, было ли удалено хотя бы одно поле
         return deleteResult.affected > 0;
     }
-    
+
     async createCommentForSpecificPost(createdComment: CommentsType): Promise<CommentsTypeView | boolean> {
 
         try {
