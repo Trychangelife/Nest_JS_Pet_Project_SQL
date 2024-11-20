@@ -165,13 +165,12 @@ export class PostsRepositorySql {
         RETURNING *
         `, [newPosts.title, newPosts.shortDescription, newPosts.content, foundBlog.id, foundBlog.name, newPosts.createdAt, foundBlog.owner_user_id])
     
-    
             const postViewModel: PostsTypeView = {
-                id: postAfterCreated[0].id.toString(),
+                id: postAfterCreated[0]?.id.toString(),
                 title: postAfterCreated[0].title,
                 shortDescription: postAfterCreated[0].short_description,
                 content: postAfterCreated[0].content,
-                blogId: postAfterCreated[0].blog_id.toString(),
+                blogId: postAfterCreated[0]?.blog_id.toString(),
                 blogName: postAfterCreated[0].blog_name,
                 createdAt: postAfterCreated[0].created_at,
                 extendedLikesInfo: {
