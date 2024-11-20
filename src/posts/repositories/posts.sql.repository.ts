@@ -178,7 +178,7 @@ export class PostsRepositorySql {
             content: savedPost.content ?? '',
             blogId: savedPost.blog_id?.toString() ?? '',
             blogName: savedPost.blog_name ?? '',
-            createdAt: savedPost.created_at.toISOString() ?? new Date().toISOString(),
+            createdAt: savedPost.created_at ?? new Date().toISOString(),
             extendedLikesInfo: {
                 likesCount: 0,
                 dislikesCount: 0,
