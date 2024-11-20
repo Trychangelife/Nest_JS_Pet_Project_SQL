@@ -169,7 +169,9 @@ export class PostsRepositorySql {
             created_at: newPosts.createdAt,
             author_user_id: foundBlog.owner_user_id,
         });
-    
+        console.log("BLOGID", foundBlog.id)
+        const takePost = await this.postRepo.findOneBy({id: savedPost.id})
+        console.log("ReleasePost: ", savedPost, takePost)
         // Формируем view-модель для ответа
         const postViewModel: PostsTypeView = {
             id: savedPost.id?.toString() ?? '', // Обрабатываем возможный null
@@ -291,11 +293,11 @@ export class PostsRepositorySql {
             // Проверка, найден ли пост
             if (post) {
                 const postViewModel: PostsTypeView = {
-                    id: post.id?.toString(),
+                    id: post.id.toString(),
                     title: post.title,
                     shortDescription: post.shortDescription,
                     content: post.content,
-                    blogId: post.blogId?.toString() || "blogId not found",
+                    blogId: post.blogId.toString(),
                     blogName: post.blogName,
                     createdAt: post.createdAt,
                     extendedLikesInfo: {
@@ -304,7 +306,7 @@ export class PostsRepositorySql {
                         myStatus: post.myStatus, // всегда "None"
                         newestLikes: post.newestLikes.map(like => ({
                             addedAt: like.addedAt,
-                            userId: like.userId?.toString(), // Конвертируем userId в строку
+                            userId: like.userId.toString(), // Конвертируем userId в строку
                             login: like.login
                         })).slice(0, 3) // последние 3 лайка
                     }

@@ -22,6 +22,13 @@ export class PostEntity {
   @Column({ type: 'timestamptz', nullable: true })
   created_at: Date;
 
+  @Column({ name: 'blog_id' })
+  blog_id: number;
+
+  @Column({ name: 'author_user_id', nullable: true})
+  author_user_id: number;
+  
+
   // Связь с блогом
   @ManyToOne(() => BlogEntity, (blog) => blog.id, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'blog_id' }) // внешний ключ для связи с блогом
