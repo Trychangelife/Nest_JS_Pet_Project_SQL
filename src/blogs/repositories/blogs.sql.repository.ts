@@ -232,11 +232,6 @@ export class BlogsRepositorySql {
 
 
         try {
-            // const [blog] = await this.dataSource.query(
-            //     `
-            // SELECT * 
-            // FROM "blog" WHERE id = $1
-            //     `, [id])
 
             const blog = await this.blogRepo.findOneBy({
                 id: Number(id)
@@ -256,14 +251,6 @@ export class BlogsRepositorySql {
 
 
     async createBlogger(newBlogger: BlogsType): Promise<BlogsTypeView | null> {
-
-
-        // const [bloggerAfterCreate] = await this.dataSource.query(`
-        // INSERT INTO "blog" (name, "website_url", description, created_at)
-        // VALUES ($1, $2, $3, $4)
-        // RETURNING *
-        // `, [newBlogger.name, newBlogger.website_url, newBlogger.description, newBlogger.created_at])
-
 
         // Создаем новую сущность
         const bloggerAfterCreate = this.blogRepo.create({
@@ -328,17 +315,4 @@ export class BlogsRepositorySql {
         await this.blogRepo.remove(existingBlog);
         return true;
     }
-    
-
-    // async deleteAllBlogger(): Promise<boolean> {
-    //     await this.dataSource.query(`TRUNCATE TABLE "blog"`)
-    //     const checkTableAfterFullClear = await this.dataSource.query(`SELECT COUNT(*) FROM "blog"`)
-    //     if (checkTableAfterFullClear > 1) {
-    //         return false
-    //     }
-    //     else {
-    //         return true
-    //     }
-
-    // }
 }
